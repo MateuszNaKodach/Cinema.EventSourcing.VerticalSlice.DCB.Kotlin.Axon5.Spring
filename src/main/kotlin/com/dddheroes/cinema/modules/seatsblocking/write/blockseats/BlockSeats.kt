@@ -9,20 +9,21 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import com.dddheroes.sdk.application.CommandResult
 import com.dddheroes.sdk.application.anyOf
-import com.dddheroes.sdk.application.resultOf
 import org.axonframework.commandhandling.annotation.CommandHandler
+import org.axonframework.commandhandling.configuration.CommandHandlingModule
 import org.axonframework.eventhandling.gateway.EventAppender
 import org.axonframework.eventsourcing.EventSourcingHandler
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
+import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule
 import org.axonframework.eventstreaming.EventCriteria
 import org.axonframework.eventstreaming.Tag
 import org.axonframework.messaging.QualifiedName
 import org.axonframework.modelling.annotation.InjectEntity
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -118,6 +119,7 @@ internal class EventSourcedState private constructor(val state: State) {
     fun evolve(event: ScreeningScheduled) = EventSourcedState(evolve(state, event))
 
     companion object {
+        @JvmStatic
         @EventCriteriaBuilder // @ConsistencyBoundary(Definition/Query/Condition/Lock)
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
             val seats = anyOf(
@@ -139,7 +141,6 @@ internal class EventSourcedState private constructor(val state: State) {
     }
 }
 
-@Component
 private class BlockSeatsCommandHandler {
 
     @CommandHandler
@@ -152,4 +153,23 @@ private class BlockSeatsCommandHandler {
         eventAppender.append(events)
     }
 
+}
+
+@Configuration
+internal class BlockSeatsWriteSliceConfig {
+
+    @Bean
+    fun blockSeatsState(): EventSourcedEntityModule<ConsistencyBoundaryId, EventSourcedState> =
+        EventSourcedEntityModule.annotated(
+            ConsistencyBoundaryId::class.java,
+            EventSourcedState::class.java
+        )
+
+
+    @Bean
+    fun blockSeatsSlice(): CommandHandlingModule =
+        CommandHandlingModule.named(BlockSeats::class.simpleName!!)
+            .commandHandlers()
+            .annotatedCommandHandlingComponent { BlockSeatsCommandHandler() }
+            .build()
 }

@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 
-@Import(TestcontainersConfiguration::class)
+@Import(value = [TestcontainersConfiguration::class, SpringBootIntegrationTest.TestConfig::class])
 @SpringBootTest
 @ActiveProfiles("testcontainers")
 abstract class SpringBootIntegrationTest {
