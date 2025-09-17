@@ -10,7 +10,6 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
@@ -131,10 +130,10 @@ class BlockSeatsTest : SpringBootIntegrationTest() {
 
         val movieId = MovieId.random()
         val screeningId = ScreeningId.random()
-        val seatRow1Col1 = SeatNumber(1, 1)
-        val seatRow1Col2 = SeatNumber(1, 2)
-        val seatRow1Col3 = SeatNumber(1, 3)
-        val seats = listOf(seatRow1Col1, seatRow1Col2, seatRow1Col3)
+        val seatRow5Col1 = SeatNumber(5, 1)
+        val seatRow5Col2 = SeatNumber(5, 2)
+        val seatRow5Col3 = SeatNumber(5, 3)
+        val seats = listOf(seatRow5Col1, seatRow5Col2, seatRow5Col3)
 
         val owner = aBlockadeOwner()
 
@@ -149,9 +148,9 @@ class BlockSeatsTest : SpringBootIntegrationTest() {
                     now
                 ),
                 // Only place some seats, not all
-                SeatPlaced(screeningId, seatRow1Col1, now),
-                SeatPlaced(screeningId, seatRow1Col2, now),
-                // seatRow1Col3 is NOT placed
+                SeatPlaced(screeningId, seatRow5Col1, now),
+                SeatPlaced(screeningId, seatRow5Col2, now),
+                // seatRow5Col3 is NOT placed
             )
             .`when`()
             .command(
