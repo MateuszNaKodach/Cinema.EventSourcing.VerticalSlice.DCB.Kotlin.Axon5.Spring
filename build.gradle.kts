@@ -1,9 +1,9 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.spring") version "1.9.25"
+    kotlin("jvm") version "2.2.10"
+    kotlin("plugin.spring") version "2.2.10"
     id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "1.9.25"
+    kotlin("plugin.jpa") version "2.2.10"
 }
 
 group = "com.dddheroes"
@@ -20,17 +20,24 @@ repositories {
     mavenCentral()
 }
 
+extra["assertkVersion"] = "0.28.1"
+extra["axonFrameworkVersion"] = "5.0.0-M3"
+extra["springBootVersion"] = "3.5.5"
+
+
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.axonframework:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.axonframework:axon-test:${property("axonFrameworkVersion")}")
+    testImplementation("com.willowtreeapps.assertk:assertk:${property("assertkVersion")}")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
