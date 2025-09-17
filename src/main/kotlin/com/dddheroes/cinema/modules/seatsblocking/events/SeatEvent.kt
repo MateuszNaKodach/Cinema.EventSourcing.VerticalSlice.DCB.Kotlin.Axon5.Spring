@@ -9,9 +9,6 @@ import org.axonframework.eventsourcing.annotations.EventTag
 sealed interface SeatEvent : CinemaEvent {
     @get:EventTag(key = CinemaTags.SCREENING_ID)
     val screeningId: ScreeningId
-    val seat: SeatNumber
-
     @get:EventTag(key = CinemaTags.SEAT_ID)
-    val seatId: String
-        get() = seat.toString()
+    val seat: SeatNumber
 }

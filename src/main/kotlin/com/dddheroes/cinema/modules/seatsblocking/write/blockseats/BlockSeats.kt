@@ -11,9 +11,9 @@ import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.anyOf
 import org.axonframework.commandhandling.annotation.CommandHandler
-import org.axonframework.commandhandling.configuration.CommandHandlingModule
 import org.axonframework.eventhandling.gateway.EventAppender
 import org.axonframework.eventsourcing.EventSourcingHandler
+import org.axonframework.eventsourcing.annotation.AnnotationBasedEventCriteriaResolverDefinition
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
@@ -22,6 +22,7 @@ import org.axonframework.eventstreaming.EventCriteria
 import org.axonframework.eventstreaming.Tag
 import org.axonframework.messaging.QualifiedName
 import org.axonframework.modelling.annotation.InjectEntity
+import org.axonframework.modelling.configuration.StatefulCommandHandlingModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Instant
@@ -100,7 +101,7 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ////////// Application
 ///////////////////////////////////////////
 
-@EventSourcedEntity // @ConsistencyBoundary
+@EventSourcedEntity(criteriaResolverDefinition = AnnotationBasedEventCriteriaResolverDefinition::class) // @ConsistencyBoundary
 internal class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
@@ -159,16 +160,15 @@ private class BlockSeatsCommandHandler {
 internal class BlockSeatsWriteSliceConfig {
 
     @Bean
-    fun blockSeatsState(): EventSourcedEntityModule<ConsistencyBoundaryId, EventSourcedState> =
-        EventSourcedEntityModule.annotated(
-            ConsistencyBoundaryId::class.java,
-            EventSourcedState::class.java
-        )
-
-
-    @Bean
-    fun blockSeatsSlice(): CommandHandlingModule =
-        CommandHandlingModule.named(BlockSeats::class.simpleName!!)
+    fun blockSeatsSlice(): StatefulCommandHandlingModule =
+        StatefulCommandHandlingModule.named(BlockSeats::class.simpleName!!)
+            .entities()
+            .entity(
+                EventSourcedEntityModule.annotated(
+                    ConsistencyBoundaryId::class.java,
+                    EventSourcedState::class.java
+                )
+            )
             .commandHandlers()
             .annotatedCommandHandlingComponent { BlockSeatsCommandHandler() }
             .build()

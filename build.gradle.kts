@@ -21,7 +21,7 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.0-M3"
+extra["axonFrameworkVersion"] = "5.0.0-M2.1"
 extra["springBootVersion"] = "3.5.5"
 
 
