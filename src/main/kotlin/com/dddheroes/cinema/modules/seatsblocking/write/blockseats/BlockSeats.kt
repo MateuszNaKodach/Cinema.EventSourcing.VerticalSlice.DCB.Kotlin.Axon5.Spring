@@ -9,20 +9,22 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import com.dddheroes.sdk.application.CommandResult
-import com.dddheroes.sdk.application.anyOf
-import com.dddheroes.sdk.application.resultOf
-import org.axonframework.commandhandling.annotation.CommandHandler
-import org.axonframework.eventhandling.gateway.EventAppender
-import org.axonframework.eventsourcing.EventSourcingHandler
+import org.axonframework.eventsourcing.annotation.AnnotationBasedEventCriteriaResolverDefinition
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
+import org.axonframework.eventsourcing.annotation.EventSourcingHandler
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
-import org.axonframework.eventstreaming.EventCriteria
-import org.axonframework.eventstreaming.Tag
-import org.axonframework.messaging.QualifiedName
+import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule
+import org.axonframework.messaging.commandhandling.annotation.CommandHandler
+import org.axonframework.messaging.commandhandling.configuration.CommandHandlingModule
+import org.axonframework.messaging.core.QualifiedName
+import org.axonframework.messaging.eventhandling.gateway.EventAppender
+import org.axonframework.messaging.eventstreaming.EventCriteria
+import org.axonframework.messaging.eventstreaming.Tag
 import org.axonframework.modelling.annotation.InjectEntity
-import org.springframework.stereotype.Component
+import org.axonframework.modelling.configuration.EntityModule
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -99,7 +101,7 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ////////// Application
 ///////////////////////////////////////////
 
-@EventSourcedEntity // @ConsistencyBoundary
+@EventSourcedEntity(criteriaResolverDefinition = AnnotationBasedEventCriteriaResolverDefinition::class) // @ConsistencyBoundary
 internal class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
@@ -118,9 +120,10 @@ internal class EventSourcedState private constructor(val state: State) {
     fun evolve(event: ScreeningScheduled) = EventSourcedState(evolve(state, event))
 
     companion object {
+        @JvmStatic
         @EventCriteriaBuilder // @ConsistencyBoundary(Definition/Query/Condition/Lock)
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
-            val seats = anyOf(
+            val seats = EventCriteria.either(
                 consistencyBoundary.seats.map {
                     EventCriteria.havingTags(Tag.of(CinemaTags.SEAT_ID, it.toString()))
                         .andBeingOneOfTypes(
@@ -139,7 +142,6 @@ internal class EventSourcedState private constructor(val state: State) {
     }
 }
 
-@Component
 private class BlockSeatsCommandHandler {
 
     @CommandHandler
@@ -152,4 +154,22 @@ private class BlockSeatsCommandHandler {
         eventAppender.append(events)
     }
 
+}
+
+@Configuration
+internal class BlockSeatsWriteSliceConfig {
+
+    @Bean
+    fun blockSeatsState(): EntityModule<ConsistencyBoundaryId, EventSourcedState> =
+        EventSourcedEntityModule.autodetected(
+            ConsistencyBoundaryId::class.java,
+            EventSourcedState::class.java
+        )
+
+    @Bean
+    fun blockSeatsSlice(): CommandHandlingModule =
+        CommandHandlingModule.named(BlockSeats::class.simpleName!!)
+            .commandHandlers()
+            .annotatedCommandHandlingComponent { BlockSeatsCommandHandler() }
+            .build()
 }

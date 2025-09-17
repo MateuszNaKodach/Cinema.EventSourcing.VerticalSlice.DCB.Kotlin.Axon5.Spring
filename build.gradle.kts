@@ -21,7 +21,7 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.0-M3"
+extra["axonFrameworkVersion"] = "5.0.0"
 extra["springBootVersion"] = "3.5.5"
 
 
@@ -29,7 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.axonframework:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
+    implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")

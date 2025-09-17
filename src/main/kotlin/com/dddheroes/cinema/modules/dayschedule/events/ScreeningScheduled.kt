@@ -4,7 +4,7 @@ import com.dddheroes.cinema.CinemaTags
 import com.dddheroes.cinema.modules.dayschedule.MovieId
 import com.dddheroes.cinema.modules.dayschedule.DayScheduleId
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
-import org.axonframework.eventsourcing.annotations.EventTag
+import org.axonframework.eventsourcing.annotation.EventTag
 import java.time.Instant
 import java.time.LocalTime
 
