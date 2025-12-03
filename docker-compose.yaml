@@ -12,3 +12,14 @@ services:
     volumes:
       - ./volumes/axonserver/data:/axonserver/data
       - ./volumes/axonserver/events:/axonserver/events
+  postgres-axon:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: cinema_db
+      POSTGRES_USER: cinema_user
+      POSTGRES_PASSWORD: cinema_password
+    ports:
+      - "8768:8768"
+    volumes:
+      - ./volumes/postgres-axon:/var/lib/postgresql/18/docker
+    command: -p 8768
