@@ -38,3 +38,14 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Docker volumes ###
+/volumes/
+
+.env
+
+.devcontainer/data
+.devcontainer/volumes
+
+### Axon Server ###
+axonserver/

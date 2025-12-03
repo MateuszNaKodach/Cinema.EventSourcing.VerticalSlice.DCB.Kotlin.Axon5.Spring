@@ -3,6 +3,7 @@ package com.dddheroes.cinema
 import org.axonframework.common.configuration.ApplicationConfigurer
 import org.axonframework.test.fixture.AxonTestFixture
 import org.axonframework.test.fixture.MessagesRecordingConfigurationEnhancer
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -24,6 +25,11 @@ abstract class SpringBootIntegrationTest {
     @BeforeEach
     fun beforeEach() {
         fixture = AxonTestFixture.with(configurer)
+    }
+
+    @AfterEach
+    fun afterEach(){
+        fixture.stop()
     }
 
     @TestConfiguration
