@@ -1,9 +1,9 @@
 plugins {
-    kotlin("jvm") version "2.2.10"
-    kotlin("plugin.spring") version "2.2.10"
-    id("org.springframework.boot") version "3.5.8"
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.spring") version "2.2.21"
+    id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.2.10"
+    kotlin("plugin.jpa") version "2.2.21"
 }
 
 group = "com.dddheroes"
@@ -23,13 +23,13 @@ repositories {
 extra["assertkVersion"] = "0.28.1"
 extra["axonFrameworkVersion"] = "5.0.0"
 extra["springDocOpenApiVersion"] = "2.8.14"
-extra["springBootVersion"] = "3.5.8"
+extra["springBootVersion"] = "4.0.0"
 extra["springAiVersion"] = "1.1.0"
 
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
@@ -42,8 +42,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.axonframework:axon-test:${property("axonFrameworkVersion")}")
     testImplementation("com.willowtreeapps.assertk:assertk:${property("assertkVersion")}")
 
