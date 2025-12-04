@@ -2,7 +2,7 @@ package com.dddheroes.cinema.modules.seatsblocking.write.blockseats
 
 import assertk.assertThat
 import assertk.assertions.messageContains
-import com.dddheroes.cinema.SpringBootIntegrationTest
+import com.dddheroes.cinema.SpringBootAxonFixtureIntegrationTest
 import com.dddheroes.cinema.modules.dayschedule.DayScheduleId
 import com.dddheroes.cinema.modules.dayschedule.MovieId
 import com.dddheroes.cinema.modules.dayschedule.events.ScreeningScheduled
@@ -19,7 +19,7 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.util.*
 
-class BlockSeatsTest : SpringBootIntegrationTest() {
+class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureIntegrationTest() {
 
     @Test
     fun `block seats if screening scheduled and seat placed, not-blocked`() {

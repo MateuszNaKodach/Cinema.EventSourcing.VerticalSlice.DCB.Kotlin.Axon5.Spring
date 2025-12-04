@@ -9,6 +9,9 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
+import com.dddheroes.sdk.application.CommandResult
+import com.dddheroes.sdk.application.resultOf
+import com.dddheroes.sdk.application.toCommandResult
 import org.axonframework.eventsourcing.annotation.AnnotationBasedEventCriteriaResolverDefinition
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
@@ -149,10 +152,11 @@ private class BlockSeatsCommandHandler {
         command: BlockSeats,
         @InjectEntity(idProperty = "consistencyBoundaryId") state: EventSourcedState,
         eventAppender: EventAppender
-    ) {
+    ): CommandResult = resultOf {
         val events = decide(command, state.state)
         eventAppender.append(events)
-    }
+        return events.toCommandResult()
+    }.throwIfFailure() // todo: remove it when support for return type introduced in test fixtures
 
 }
 
