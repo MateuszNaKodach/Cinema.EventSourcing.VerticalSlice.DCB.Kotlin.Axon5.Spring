@@ -17,26 +17,34 @@ java {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.1"
+extra["axonFrameworkVersion"] = "5.1.0-SNAPSHOT"
 extra["springDocOpenApiVersion"] = "3.0.0"
 extra["springBootVersion"] = "4.0.0"
 extra["springAiVersion"] = "1.1.0"
 
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa") {
+//        exclude(group = "org.springframework.boot", module = "spring-boot-jackson")
+    }
+    implementation("org.springframework.boot:spring-boot-starter-webmvc") {
+//        exclude(group = "org.springframework.boot", module = "spring-boot-jackson")
+    }
+//    implementation("org.springframework.boot:spring-boot-jackson2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springDocOpenApiVersion")}")
 
     implementation("org.axonframework:axon-eventsourcing:${property("axonFrameworkVersion")}")
     implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("tools.jackson.module:jackson-module-kotlin")
+
+    implementation("tools.jackson.module:jackson-module-kotlin") // jackson 3
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin") // jackson 2
 
     runtimeOnly("org.postgresql:postgresql")
 

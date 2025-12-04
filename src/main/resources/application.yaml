@@ -22,7 +22,9 @@ spring:
 
 axon:
   axonserver:
-    enabled: true
+    enabled: false
+  timeout:
+    enabled: false
 
 springdoc:
   api-docs:
@@ -33,3 +35,65 @@ springdoc:
     tagsSorter: alpha
     docExpansion: none
   use-fqn: true
+
+slices:
+  dayschedule:
+    write:
+      cancelscreening:
+        enabled: true
+      schedulescreening:
+        enabled: true
+      createschedule:
+        enabled: true
+    read:
+      searchscreenings:
+        enabled: true
+      getschedulebyid:
+        enabled: true
+    automation:
+      whenscreeningscheduledthenplaceseats:
+        enabled: true
+  seatsblocking:
+    write:
+      blockseat:
+        enabled: true
+      blockseats:
+        enabled: true
+      placeseat:
+        enabled: true
+    automation:
+      trendsreporter:
+        enabled: true
+  adminnotifications:
+    write:
+      readnotification:
+        enabled: true
+      sendnotification:
+        enabled: true
+      starnotification:
+        enabled: true
+    automation:
+      notificationviaemail:
+        enabled: true
+  issues:
+    write:
+      openissue:
+        enabled: true
+    automation:
+      aiissueforwarder:
+        enabled: true
+  reservations:
+    write:
+      startreservation:
+        enabled: true
+      confirmseats:
+        enabled: true
+      cancelreservation:
+        enabled: true
+      collectreservation:
+        enabled: true
+    automation:
+      blockingseats:
+        enabled: true
+      reservationexpiration:
+        enabled: true
