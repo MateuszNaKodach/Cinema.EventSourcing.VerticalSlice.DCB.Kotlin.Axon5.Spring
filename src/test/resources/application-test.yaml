@@ -1,0 +1,64 @@
+slices:
+  dayschedule:
+    write:
+      cancelscreening:
+        enabled: false
+      schedulescreening:
+        enabled: false
+    read:
+      searchscreenings:
+        enabled: false
+      getschedulebyid:
+        enabled: false
+    automation:
+      whenscreeningscheduledthenplaceseats:
+        enabled: false
+  seatsblocking:
+    write:
+      blockseat:
+        enabled: false
+      blockseats:
+        enabled: false
+      placeseat:
+        enabled: false
+    automation:
+      trendsreporter:
+        enabled: false
+  adminnotifications:
+    write:
+      readnotification:
+        enabled: false
+      sendnotification:
+        enabled: false
+      starnotification:
+        enabled: false
+    automation:
+      notificationviaemail:
+        enabled: false
+  issues:
+    write:
+      openissue:
+        enabled: false
+    automation:
+      aiissueforwarder:
+        enabled: false
+  reservations:
+    write:
+      startreservation:
+        enabled: false
+      confirmseats:
+        enabled: false
+      cancelreservation:
+        enabled: false
+      collectreservation:
+        enabled: false
+    automation:
+      blockingseats:
+        enabled: false
+      reservationexpiration:
+        enabled: false
+
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 5

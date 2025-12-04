@@ -13,10 +13,10 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
-@Import(value = [SpringBootAxonFixtureIntegrationTest.TestConfig::class, TestcontainersConfiguration::class])
+@Import(value = [SpringBootAxonFixtureTest.TestConfig::class, TestcontainersConfiguration::class])
 @ActiveProfiles("test", "testcontainers", "axonserver")
 // @ActiveProfiles("test", "axonserver") // if you don't want to use testcontainers
-abstract class SpringBootAxonFixtureIntegrationTest {
+abstract class SpringBootAxonFixtureTest {
 
     @Autowired
     lateinit var configurer: ApplicationConfigurer

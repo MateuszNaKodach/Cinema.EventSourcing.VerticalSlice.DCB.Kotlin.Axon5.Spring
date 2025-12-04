@@ -12,7 +12,6 @@ import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
-import org.axonframework.eventsourcing.annotation.AnnotationBasedEventCriteriaResolverDefinition
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
@@ -26,6 +25,7 @@ import org.axonframework.messaging.eventstreaming.EventCriteria
 import org.axonframework.messaging.eventstreaming.Tag
 import org.axonframework.modelling.annotation.InjectEntity
 import org.axonframework.modelling.configuration.EntityModule
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Instant
@@ -104,7 +104,7 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ////////// Application
 ///////////////////////////////////////////
 
-@EventSourcedEntity(criteriaResolverDefinition = AnnotationBasedEventCriteriaResolverDefinition::class) // @ConsistencyBoundary
+@EventSourcedEntity // @ConsistencyBoundary
 internal class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
@@ -160,6 +160,7 @@ private class BlockSeatsCommandHandler {
 
 }
 
+@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
 @Configuration
 internal class BlockSeatsWriteSliceConfig {
 

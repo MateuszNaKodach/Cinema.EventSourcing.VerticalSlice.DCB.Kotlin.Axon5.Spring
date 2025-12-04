@@ -2,7 +2,7 @@ package com.dddheroes.cinema.modules.seatsblocking.write.blockseats
 
 import assertk.assertThat
 import assertk.assertions.messageContains
-import com.dddheroes.cinema.SpringBootAxonFixtureIntegrationTest
+import com.dddheroes.cinema.SpringBootAxonFixtureTest
 import com.dddheroes.cinema.modules.dayschedule.DayScheduleId
 import com.dddheroes.cinema.modules.dayschedule.MovieId
 import com.dddheroes.cinema.modules.dayschedule.events.ScreeningScheduled
@@ -13,13 +13,15 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import org.junit.jupiter.api.Test
+import org.springframework.test.context.TestPropertySource
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.util.*
 
-class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureIntegrationTest() {
+@TestPropertySource(properties = ["slices.seatsblocking.write.blockseats.enabled=true"])
+class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureTest() {
 
     @Test
     fun `block seats if screening scheduled and seat placed, not-blocked`() {
