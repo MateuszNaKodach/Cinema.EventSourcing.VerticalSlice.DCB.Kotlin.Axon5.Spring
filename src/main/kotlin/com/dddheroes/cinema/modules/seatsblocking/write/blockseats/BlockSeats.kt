@@ -19,6 +19,7 @@ import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
 import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule
 import org.axonframework.messaging.commandhandling.annotation.CommandHandler
 import org.axonframework.messaging.commandhandling.configuration.CommandHandlingModule
+import org.axonframework.messaging.commandhandling.gateway.CommandGateway
 import org.axonframework.messaging.core.QualifiedName
 import org.axonframework.messaging.eventhandling.gateway.EventAppender
 import org.axonframework.messaging.eventstreaming.EventCriteria
@@ -28,8 +29,16 @@ import org.axonframework.modelling.configuration.EntityModule
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.concurrent.CompletableFuture
 
 ////////////////////////////////////////////
 ////////// Domain
@@ -177,4 +186,39 @@ internal class BlockSeatsWriteSliceConfig {
             .commandHandlers()
             .annotatedCommandHandlingComponent { BlockSeatsCommandHandler() }
             .build()
+}
+
+
+@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
+@RestController
+@RequestMapping("cinema/screenings/{screeningId}")
+internal class BlockSeatsRestApi(
+    private val commandGateway: CommandGateway,
+//    private val clock: Clock
+) {
+
+    data class Body(
+        val seats: Set<String>,
+        val blockadeOwner: String,
+    )
+
+//    @PutMapping("/seats-blockades")
+//    fun putSeatsBlockades(
+//        @PathVariable screeningId: ScreeningId,
+//        @RequestBody requestBody: Body
+//    ): CompletableFuture<ResponseEntity<Any>> =
+//        commandGateway.send<CommandResult>(
+//            BlockSeats(
+//                screeningId = screeningId,
+//                seats = requestBody.seats.map { SeatNumber.from(it) }.toSet(),
+//                blockadeOwner = requestBody.blockadeOwner,
+//                issuedAt = clock.instant()
+//            )
+//        ).thenApply {
+//            when (it) {
+//                is CommandResult.Success -> ResponseEntity.noContent().build()
+//                is CommandResult.Failure -> ResponseEntity.badRequest().body(ErrorResponse(it.message))
+//            }
+//        }
+
 }
