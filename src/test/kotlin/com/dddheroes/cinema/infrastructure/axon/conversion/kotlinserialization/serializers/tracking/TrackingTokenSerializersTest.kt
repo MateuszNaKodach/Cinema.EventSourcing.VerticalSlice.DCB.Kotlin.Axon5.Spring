@@ -113,7 +113,41 @@ class TrackingTokenSerializersTest {
     }
 
     @Test
-    fun `should serialize and deserialize ReplayToken with JsonElement context`() {
+    fun `should serialize and deserialize ReplayToken with String context`() {
+        val tokenAtReset = GlobalSequenceTrackingToken(100L)
+        val currentToken = GlobalSequenceTrackingToken(50L)
+        val context = "replay-reason"
+        val original = ReplayToken.createReplayToken(tokenAtReset, currentToken, context) as ReplayToken
+
+        val serialized = json.encodeToString(ReplayTokenSerializer, original)
+        val deserialized = json.decodeFromString(ReplayTokenSerializer, serialized)
+
+        assertThat((deserialized.tokenAtReset as GlobalSequenceTrackingToken).globalIndex).isEqualTo(100L)
+        assertThat((deserialized.currentToken as GlobalSequenceTrackingToken).globalIndex).isEqualTo(50L)
+        // Context is stored as ByteArray for cross-serializer compatibility
+        val contextBytes = deserialized.context() as ByteArray
+        assertThat(String(contextBytes, Charsets.UTF_8)).isEqualTo(context)
+    }
+
+    @Test
+    fun `should serialize ReplayToken with ByteArray context and deserialize as ByteArray`() {
+        val tokenAtReset = GlobalSequenceTrackingToken(100L)
+        val currentToken = GlobalSequenceTrackingToken(50L)
+        val context = "replay-reason".toByteArray(Charsets.UTF_8)
+        val original = ReplayToken.createReplayToken(tokenAtReset, currentToken, context) as ReplayToken
+
+        val serialized = json.encodeToString(ReplayTokenSerializer, original)
+        val deserialized = json.decodeFromString(ReplayTokenSerializer, serialized)
+
+        assertThat((deserialized.tokenAtReset as GlobalSequenceTrackingToken).globalIndex).isEqualTo(100L)
+        assertThat((deserialized.currentToken as GlobalSequenceTrackingToken).globalIndex).isEqualTo(50L)
+        // Context is stored as ByteArray for cross-serializer compatibility
+        val contextBytes = deserialized.context() as ByteArray
+        assertThat(String(contextBytes, Charsets.UTF_8)).isEqualTo("replay-reason")
+    }
+
+    @Test
+    fun `should serialize ReplayToken with JsonElement context and deserialize as ByteArray`() {
         val tokenAtReset = GlobalSequenceTrackingToken(100L)
         val currentToken = GlobalSequenceTrackingToken(50L)
         val context = JsonPrimitive("replay-reason")
@@ -124,7 +158,9 @@ class TrackingTokenSerializersTest {
 
         assertThat((deserialized.tokenAtReset as GlobalSequenceTrackingToken).globalIndex).isEqualTo(100L)
         assertThat((deserialized.currentToken as GlobalSequenceTrackingToken).globalIndex).isEqualTo(50L)
-        assertThat(deserialized.context()).isEqualTo(context)
+        // JsonElement context is converted to JSON bytes representation for cross-serializer compatibility
+        val contextBytes = deserialized.context() as ByteArray
+        assertThat(String(contextBytes, Charsets.UTF_8)).isEqualTo("\"replay-reason\"")
     }
 
     @Test
