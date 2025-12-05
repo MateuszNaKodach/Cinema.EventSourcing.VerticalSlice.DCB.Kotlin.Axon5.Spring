@@ -2,8 +2,11 @@ package com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.AxonSerializersModule
+import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.KotlinSerializationConverter
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
@@ -196,5 +199,77 @@ class TrackingTokenSerializersTest {
         val token = ConfigToken(mapOf("key" to "value"))
         val serialized = json.encodeToString(ConfigTokenSerializer, token)
         assertThat(serialized).isEqualTo("""{"config":{"key":"value"}}""")
+    }
+
+    // Custom context class for testing ReplayToken context conversion
+    @Serializable
+    data class ReplayContext(
+        val reason: String,
+        val triggeredBy: String,
+        val timestamp: Long
+    )
+
+    @Test
+    fun `should serialize ReplayToken with custom object context and convert back using Converter`() {
+        // Given: A ReplayToken with a custom object as context
+        val tokenAtReset = GlobalSequenceTrackingToken(100L)
+        val currentToken = GlobalSequenceTrackingToken(50L)
+        val originalContext = ReplayContext(
+            reason = "Data migration",
+            triggeredBy = "admin-user",
+            timestamp = 1234567890L
+        )
+
+        // When: Create ReplayToken with custom context and serialize/deserialize it
+        val original = ReplayToken.createReplayToken(tokenAtReset, currentToken, originalContext) as ReplayToken
+        val serialized = json.encodeToString(ReplayTokenSerializer, original)
+        val deserialized = json.decodeFromString(ReplayTokenSerializer, serialized)
+
+        // Then: The context is stored as ByteArray
+        assertThat(deserialized.context()).isNotNull()
+        val contextBytes = deserialized.context() as ByteArray
+
+        // And: We can convert the ByteArray context back to the original type using Converter
+        val converter = KotlinSerializationConverter(json)
+        val restoredContext = converter.convert<ReplayContext>(contextBytes, ReplayContext::class.java)
+
+        assertThat(restoredContext).isNotNull()
+        assertThat(restoredContext!!.reason).isEqualTo("Data migration")
+        assertThat(restoredContext.triggeredBy).isEqualTo("admin-user")
+        assertThat(restoredContext.timestamp).isEqualTo(1234567890L)
+    }
+
+    @Test
+    fun `should serialize ReplayToken with nested object context and convert back using Converter`() {
+        // Given: A more complex nested context object
+        @Serializable
+        data class ReplayMetadata(val version: Int, val tags: List<String>)
+
+        @Serializable
+        data class ComplexReplayContext(
+            val reason: String,
+            val metadata: ReplayMetadata
+        )
+
+        val tokenAtReset = GlobalSequenceTrackingToken(200L)
+        val originalContext = ComplexReplayContext(
+            reason = "Schema upgrade",
+            metadata = ReplayMetadata(version = 2, tags = listOf("migration", "v2"))
+        )
+
+        // When: Create ReplayToken with complex context and serialize/deserialize
+        val original = ReplayToken.createReplayToken(tokenAtReset, null, originalContext) as ReplayToken
+        val serialized = json.encodeToString(ReplayTokenSerializer, original)
+        val deserialized = json.decodeFromString(ReplayTokenSerializer, serialized)
+
+        // Then: Convert the ByteArray context back to the original type
+        val converter = KotlinSerializationConverter(json)
+        val contextBytes = deserialized.context() as ByteArray
+        val restoredContext = converter.convert<ComplexReplayContext>(contextBytes, ComplexReplayContext::class.java)
+
+        assertThat(restoredContext).isNotNull()
+        assertThat(restoredContext!!.reason).isEqualTo("Schema upgrade")
+        assertThat(restoredContext.metadata.version).isEqualTo(2)
+        assertThat(restoredContext.metadata.tags).isEqualTo(listOf("migration", "v2"))
     }
 }
