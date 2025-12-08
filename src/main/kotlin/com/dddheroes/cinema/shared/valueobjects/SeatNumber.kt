@@ -1,5 +1,8 @@
 package com.dddheroes.cinema.shared.valueobjects
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SeatNumber(val row: Int, val column: Int) {
 
     init {

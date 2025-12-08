@@ -1,6 +1,7 @@
 package com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization
 
 import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.serializers.metadata.ComposedMetadataSerializer
+import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.serializers.time.JavaInstantSerializer
 import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.serializers.tracking.ConfigTokenSerializer
 import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.serializers.tracking.GapAwareTrackingTokenSerializer
 import com.dddheroes.cinema.infrastructure.axon.conversion.kotlinserialization.serializers.tracking.GlobalSequenceTrackingTokenSerializer
@@ -16,6 +17,7 @@ import org.axonframework.messaging.eventhandling.processing.streaming.token.Merg
 import org.axonframework.messaging.eventhandling.processing.streaming.token.ReplayToken
 import org.axonframework.messaging.eventhandling.processing.streaming.token.TrackingToken
 import org.axonframework.messaging.eventhandling.processing.streaming.token.store.ConfigToken
+import java.time.Instant
 
 /**
  * Module defining serializers for Axon Framework 5's core event handling and messaging components.
@@ -26,6 +28,9 @@ import org.axonframework.messaging.eventhandling.processing.streaming.token.stor
  * Note: ScheduleTokens and ResponseTypes are not included as they are not present in Axon Framework 5.
  */
 val AxonSerializersModule = SerializersModule {
+    // Java time types
+    contextual(Instant::class) { JavaInstantSerializer }
+
     // TrackingTokens - contextual serializers
     contextual(ConfigToken::class) { ConfigTokenSerializer }
     contextual(GapAwareTrackingToken::class) { GapAwareTrackingTokenSerializer }

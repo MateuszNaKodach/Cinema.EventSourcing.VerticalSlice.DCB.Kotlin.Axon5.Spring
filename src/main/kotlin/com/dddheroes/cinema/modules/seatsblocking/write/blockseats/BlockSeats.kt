@@ -12,6 +12,10 @@ import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import java.time.Instant
+import java.time.ZoneOffset
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
@@ -31,23 +35,23 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.time.Instant
-import java.time.ZoneOffset
 
 ////////////////////////////////////////////
 ////////// Domain
 ///////////////////////////////////////////
 
+@Serializable
 data class ConsistencyBoundaryId(
     val screeningId: ScreeningId,
     val seats: Set<SeatNumber>
 )
 
+@Serializable
 data class BlockSeats(
     val screeningId: ScreeningId,
     val seats: Set<SeatNumber>,
     val blockadeOwner: String,
-    val issuedAt: Instant
+    @Contextual val issuedAt: Instant
 ) {
     val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
 }

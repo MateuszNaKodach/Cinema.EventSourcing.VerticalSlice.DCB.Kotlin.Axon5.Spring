@@ -5,10 +5,14 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.dddheroes.cinema.modules.seatsblocking.write.blockseats.BlockSeats
+import com.dddheroes.cinema.shared.valueobjects.ScreeningId
+import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import org.axonframework.messaging.core.Metadata
+import java.time.Instant
 import org.axonframework.messaging.eventhandling.processing.streaming.token.GapAwareTrackingToken
 import org.axonframework.messaging.eventhandling.processing.streaming.token.GlobalSequenceTrackingToken
 import org.axonframework.messaging.eventhandling.processing.streaming.token.MergedTrackingToken
@@ -156,6 +160,32 @@ class KotlinSerializationConverterTest {
         val original = TestEvent("test-id", 42)
         val json = converter.convert<String>(original, String::class.java)!!
         val restored = converter.convert<TestEvent>(json, TestEvent::class.java)
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `should convert BlockSeats command round-trip`() {
+        val original = BlockSeats(
+            screeningId = ScreeningId.of("screening-123"),
+            seats = setOf(SeatNumber(1, 1), SeatNumber(1, 2)),
+            blockadeOwner = "user-456",
+            issuedAt = Instant.parse("2024-01-15T10:30:00Z")
+        )
+        val json = converter.convert<String>(original, String::class.java)!!
+        val restored = converter.convert<BlockSeats>(json, BlockSeats::class.java)
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `should convert BlockSeats to ByteArray round-trip`() {
+        val original = BlockSeats(
+            screeningId = ScreeningId.of("screening-123"),
+            seats = setOf(SeatNumber(1, 1)),
+            blockadeOwner = "user-456",
+            issuedAt = Instant.now()
+        )
+        val bytes = converter.convert<ByteArray>(original, ByteArray::class.java)!!
+        val restored = converter.convert<BlockSeats>(bytes, BlockSeats::class.java)
         assertThat(restored).isEqualTo(original)
     }
 }
