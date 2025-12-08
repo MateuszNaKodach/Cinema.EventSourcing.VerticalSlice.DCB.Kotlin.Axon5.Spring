@@ -33,11 +33,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa") {
 //        exclude(group = "org.springframework.boot", module = "spring-boot-jackson")
     }
-    implementation("org.springframework.boot:spring-boot-starter-webmvc") {
+    implementation("org.springframework.boot:spring-boot-starter-webflux") {
 //        exclude(group = "org.springframework.boot", module = "spring-boot-jackson")
     }
 //    implementation("org.springframework.boot:spring-boot-jackson2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springDocOpenApiVersion")}")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springDocOpenApiVersion")}")
 
     implementation("org.axonframework:axon-eventsourcing:${property("axonFrameworkVersion")}")
     implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
@@ -61,7 +61,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
     testImplementation("org.axonframework:axon-test:${property("axonFrameworkVersion")}")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")

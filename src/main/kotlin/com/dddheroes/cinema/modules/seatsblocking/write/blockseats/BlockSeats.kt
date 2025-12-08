@@ -29,16 +29,10 @@ import org.axonframework.modelling.configuration.EntityModule
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
-import java.util.concurrent.CompletableFuture
 
 ////////////////////////////////////////////
 ////////// Domain
@@ -64,38 +58,39 @@ internal data class State(
 )
 
 private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
-    if (state.screeningEndTime == null) {
-        throw IllegalStateException("Cannot block seats - screening not scheduled yet")
-    }
-    if (command.issuedAt.isAfter(state.screeningEndTime)) {
-        throw IllegalStateException("Cannot block seats - screening has already ended")
-    }
-    // Check if seats are placed (exist in state map)
-    val seatsNotPlaced = command.seats.filter { seat ->
-        !state.blockadeBySeat.containsKey(seat)
-    }
-
-    if (seatsNotPlaced.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - must be placed first")
-    }
-
-    val seatsBlockedByOthers = command.seats.filter { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        blockedBy != null && blockedBy != command.blockadeOwner
-    }
-
-    if (seatsBlockedByOthers.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
-    }
-
-    return command.seats.mapNotNull { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        when (blockedBy) {
-            null -> SeatBlocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
-            command.blockadeOwner -> null // Already blocked by same owner, no event needed
-            else -> null
-        }
-    }
+    return listOf(SeatBlocked(command.screeningId, command.seats.first(), command.blockadeOwner, command.issuedAt))
+//    if (state.screeningEndTime == null) {
+//        throw IllegalStateException("Cannot block seats - screening not scheduled yet")
+//    }
+//    if (command.issuedAt.isAfter(state.screeningEndTime)) {
+//        throw IllegalStateException("Cannot block seats - screening has already ended")
+//    }
+//    // Check if seats are placed (exist in state map)
+//    val seatsNotPlaced = command.seats.filter { seat ->
+//        !state.blockadeBySeat.containsKey(seat)
+//    }
+//
+//    if (seatsNotPlaced.isNotEmpty()) {
+//        throw kotlin.IllegalStateException("Cannot block seats - must be placed first")
+//    }
+//
+//    val seatsBlockedByOthers = command.seats.filter { seat ->
+//        val blockedBy = state.blockadeBySeat[seat]
+//        blockedBy != null && blockedBy != command.blockadeOwner
+//    }
+//
+//    if (seatsBlockedByOthers.isNotEmpty()) {
+//        throw kotlin.IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
+//    }
+//
+//    return command.seats.mapNotNull { seat ->
+//        val blockedBy = state.blockadeBySeat[seat]
+//        when (blockedBy) {
+//            null -> SeatBlocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
+//            command.blockadeOwner -> null // Already blocked by same owner, no event needed
+//            else -> null
+//        }
+//    }
 }
 
 private fun evolve(state: State, event: CinemaEvent): State = when (event) {

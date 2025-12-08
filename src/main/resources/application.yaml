@@ -19,6 +19,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  main:
+    allow-circular-references: false
 
 axon:
   axonserver:
