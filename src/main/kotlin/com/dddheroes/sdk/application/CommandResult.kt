@@ -3,9 +3,13 @@ package com.dddheroes.sdk.application
 import com.dddheroes.sdk.domain.DomainEvent
 import com.dddheroes.sdk.domain.DomainRuleViolatedException
 import com.dddheroes.sdk.domain.FailureEvent
+import kotlinx.serialization.Serializable
 
+@Serializable
 sealed class CommandResult {
+    @Serializable
     data object Success : CommandResult()
+    @Serializable
     data class Failure(val message: String) : CommandResult()
 
     fun throwIfFailure(): CommandResult {
