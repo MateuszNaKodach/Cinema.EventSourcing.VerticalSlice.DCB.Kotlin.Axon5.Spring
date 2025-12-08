@@ -18,6 +18,7 @@ import org.axonframework.messaging.eventhandling.processing.streaming.token.stor
 import org.axonframework.messaging.eventhandling.processing.streaming.token.store.jpa.JpaTokenStore
 import org.axonframework.messaging.eventhandling.processing.streaming.token.store.jpa.JpaTokenStoreConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.persistence.autoconfigure.EntityScan
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.boot.runApplication
@@ -26,11 +27,18 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
+import org.axonframework.messaging.core.unitofwork.transaction.TransactionManager
+import org.axonframework.extension.spring.messaging.unitofwork.SpringTransactionManager
 import java.sql.SQLException
 import java.time.Instant
 import javax.sql.DataSource
 
 @SpringBootApplication
+@EntityScan(
+    basePackages = ["com.dddheroes.cinema"],
+    basePackageClasses = [org.axonframework.messaging.eventhandling.processing.streaming.token.store.jpa.TokenEntry::class]
+)
 class CinemaApplication
 
 fun main(args: Array<String>) {
@@ -84,6 +92,11 @@ class EventProcessingConfiguration {
     @Bean
     fun converter(): Converter = KotlinSerializationConverter()
 
+    @Bean
+    @ConditionalOnMissingBean
+    fun axonTransactionManager(platformTransactionManager: PlatformTransactionManager): TransactionManager {
+        return SpringTransactionManager(platformTransactionManager)
+    }
 }
 
 @Service
