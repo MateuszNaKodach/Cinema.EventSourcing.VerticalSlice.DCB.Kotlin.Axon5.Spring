@@ -1,9 +1,9 @@
 plugins {
-    kotlin("jvm") version "2.2.21"
-    kotlin("plugin.spring") version "2.2.21"
+    kotlin("jvm") version "2.3.0"
+    kotlin("plugin.spring") version "2.3.0"
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.2.21"
+    kotlin("plugin.jpa") version "2.3.0"
 }
 
 group = "com.dddheroes"
@@ -22,7 +22,7 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.1.0-SNAPSHOT"
+extra["axonFrameworkVersion"] = "5.0.2"
 extra["springDocOpenApiVersion"] = "3.0.0"
 extra["springBootVersion"] = "4.0.0"
 extra["springAiVersion"] = "1.1.0"
