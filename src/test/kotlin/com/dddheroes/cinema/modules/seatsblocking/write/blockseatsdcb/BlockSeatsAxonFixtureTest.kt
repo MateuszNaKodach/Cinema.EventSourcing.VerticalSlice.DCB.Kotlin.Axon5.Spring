@@ -1,7 +1,5 @@
-package com.dddheroes.cinema.modules.seatsblocking.write.blockseats
+package com.dddheroes.cinema.modules.seatsblocking.write.blockseatsdcb
 
-import assertk.assertThat
-import assertk.assertions.messageContains
 import com.dddheroes.cinema.SpringBootAxonFixtureTest
 import com.dddheroes.cinema.modules.dayschedule.DayScheduleId
 import com.dddheroes.cinema.modules.dayschedule.MovieId
