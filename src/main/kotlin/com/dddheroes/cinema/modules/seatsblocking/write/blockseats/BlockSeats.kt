@@ -156,7 +156,7 @@ private class BlockSeatsCommandHandler {
         val events = decide(command, state.state)
         eventAppender.append(events)
         return events.toCommandResult()
-    }.throwIfFailure() // todo: remove it when support for return type introduced in test fixtures
+    }
 
 }
 
