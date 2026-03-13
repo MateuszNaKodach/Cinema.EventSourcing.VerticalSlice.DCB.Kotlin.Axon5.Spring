@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "2.3.0"
     kotlin("plugin.spring") version "2.3.0"
-    id("org.springframework.boot") version "4.0.0"
+    id("org.springframework.boot") version "4.0.2"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "2.3.0"
 }
@@ -22,10 +22,10 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.2"
-extra["springDocOpenApiVersion"] = "3.0.0"
-extra["springBootVersion"] = "4.0.0"
-extra["springAiVersion"] = "1.1.0"
+extra["axonFrameworkVersion"] = "5.0.3"
+extra["springDocOpenApiVersion"] = "3.0.2"
+extra["springBootVersion"] = "4.0.2"
+extra["springAiVersion"] = "2.0.0-M2"
 
 
 dependencies {

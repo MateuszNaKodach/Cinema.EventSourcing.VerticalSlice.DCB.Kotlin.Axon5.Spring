@@ -175,6 +175,6 @@ internal class BlockSeatsWriteSliceConfig {
     fun blockSeatsSlice(): CommandHandlingModule =
         CommandHandlingModule.named(BlockSeats::class.simpleName!!)
             .commandHandlers()
-            .annotatedCommandHandlingComponent { BlockSeatsCommandHandler() }
+            .autodetectedCommandHandlingComponent { BlockSeatsCommandHandler() }
             .build()
 }
