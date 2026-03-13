@@ -9,7 +9,7 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import com.dddheroes.sdk.application.CommandResult
+import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
@@ -152,7 +152,7 @@ private class BlockSeatsCommandHandler {
         command: BlockSeats,
         @InjectEntity(idProperty = "consistencyBoundaryId") state: EventSourcedState,
         eventAppender: EventAppender
-    ): CommandResult = resultOf {
+    ): CommandHandlerResult = resultOf {
         val events = decide(command, state.state)
         eventAppender.append(events)
         return events.toCommandResult()

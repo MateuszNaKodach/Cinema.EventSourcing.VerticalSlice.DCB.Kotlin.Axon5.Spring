@@ -4,11 +4,11 @@ import com.dddheroes.sdk.domain.DomainEvent
 import com.dddheroes.sdk.domain.DomainRuleViolatedException
 import com.dddheroes.sdk.domain.FailureEvent
 
-sealed class CommandResult {
-    data object Success : CommandResult()
-    data class Failure(val message: String) : CommandResult()
+sealed class CommandHandlerResult {
+    data object Success : CommandHandlerResult()
+    data class Failure(val message: String) : CommandHandlerResult()
 
-    fun throwIfFailure(): CommandResult {
+    fun throwIfFailure(): CommandHandlerResult {
         if (this is Failure) {
             throw DomainRuleViolatedException(message)
         }
@@ -16,21 +16,21 @@ sealed class CommandResult {
     }
 }
 
-inline fun <T, R> T.resultOf(block: T.() -> R): CommandResult {
+inline fun <T, R> T.resultOf(block: T.() -> R): CommandHandlerResult {
     return try {
         block()
-        CommandResult.Success
+        CommandHandlerResult.Success
     } catch (e: Throwable) {
-        CommandResult.Failure(e.message ?: "Unknown error")
+        CommandHandlerResult.Failure(e.message ?: "Unknown error")
     }
 }
 
-fun <T : DomainEvent> Collection<T>.toCommandResult(): CommandResult {
+fun <T : DomainEvent> Collection<T>.toCommandResult(): CommandHandlerResult {
     val failureEvents = this.filterIsInstance<FailureEvent>()
     return if (failureEvents.isEmpty()) {
-        CommandResult.Success
+        CommandHandlerResult.Success
     } else {
         val messages = failureEvents.joinToString(", ") { it.reason }
-        CommandResult.Failure(messages)
+        CommandHandlerResult.Failure(messages)
     }
 }

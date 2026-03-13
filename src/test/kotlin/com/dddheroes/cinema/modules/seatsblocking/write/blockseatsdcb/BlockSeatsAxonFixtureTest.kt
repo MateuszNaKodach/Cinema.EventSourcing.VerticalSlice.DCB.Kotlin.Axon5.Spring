@@ -10,7 +10,7 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import com.dddheroes.sdk.application.CommandResult
+import com.dddheroes.sdk.application.CommandHandlerResult
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.TestPropertySource
 import java.time.Instant
@@ -86,7 +86,7 @@ class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureTest() {
                 BlockSeats(screeningId, seats.toSet(), owner, now)
             )
             .then()
-            .resultMessagePayload(CommandResult.Failure("Cannot block seats - screening not scheduled yet"))
+            .resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - screening not scheduled yet"))
     }
 
     @Test
@@ -123,7 +123,7 @@ class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureTest() {
                 BlockSeats(screeningId, seats.toSet(), owner, afterScreeningEndTime)
             )
             .then()
-            .resultMessagePayload(CommandResult.Failure("Cannot block seats - screening has already ended"))
+            .resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - screening has already ended"))
     }
 
     @Test
@@ -160,7 +160,7 @@ class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureTest() {
                 BlockSeats(screeningId, seats.toSet(), owner, now)
             )
             .then()
-            .resultMessagePayload(CommandResult.Failure("Cannot block seats - must be placed first"))
+            .resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - must be placed first"))
     }
 
     @Test
@@ -200,7 +200,7 @@ class BlockSeatsAxonFixtureTest : SpringBootAxonFixtureTest() {
                 BlockSeats(screeningId, seats.toSet(), ownerB, now)
             )
             .then()
-            .resultMessagePayload(CommandResult.Failure("Cannot block seats - some seats are already blocked by others: [1:1, 1:2]"))
+            .resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - some seats are already blocked by others: [1:1, 1:2]"))
     }
 
     @Test
