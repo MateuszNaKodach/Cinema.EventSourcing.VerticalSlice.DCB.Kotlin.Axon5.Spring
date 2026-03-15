@@ -52,6 +52,7 @@ class SeatBlockingPolicyTest {
             val violation = policy.verify(command, state)
             assertNotNull(violation)
             assert(violation!!.policyName == "NoSingleEmptySeat")
+            assert(violation.affectedSeats.contains(SeatNumber(1, 1)))
         }
 
         @Test
@@ -82,7 +83,7 @@ class SeatBlockingPolicyTest {
 
             val violation = policy.verify(command, state)
             assertNotNull(violation)
-            assert(violation!!.policyName == "NoSingleEmptySeat")
+            assert(violation!!.affectedSeats.contains(SeatNumber(1, 0)))
         }
 
         @Test
@@ -140,6 +141,7 @@ class SeatBlockingPolicyTest {
             val violation = policy.verify(command, state)
             assertNotNull(violation)
             assert(violation!!.policyName == "CovidSpacing")
+            assert(violation.affectedSeats.contains(SeatNumber(1, 2)))
         }
 
         @Test

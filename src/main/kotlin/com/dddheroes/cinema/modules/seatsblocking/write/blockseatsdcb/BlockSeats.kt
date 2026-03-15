@@ -45,7 +45,8 @@ data class ConsistencyBoundaryId(
 
 data class PolicyViolation(
     val policyName: String,
-    val reason: String
+    val reason: String,
+    val affectedSeats: Set<SeatNumber> = emptySet()
 )
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -91,7 +92,8 @@ sealed interface SeatBlockingPolicy {
                     if (leftBlocked && rightBlocked) {
                         return PolicyViolation(
                             policyName = "NoSingleEmptySeat",
-                            reason = "Blocking would leave seat $seat as a single empty gap"
+                            reason = "Blocking would leave seat $seat as a single empty gap",
+                            affectedSeats = setOf(seat)
                         )
                     }
                 }
@@ -119,7 +121,8 @@ sealed interface SeatBlockingPolicy {
                 if (adjacentBlockedByOthers.isNotEmpty()) {
                     return PolicyViolation(
                         policyName = "CovidSpacing",
-                        reason = "Seat $seat is adjacent to seats blocked by others: $adjacentBlockedByOthers"
+                        reason = "Seat $seat is adjacent to seats blocked by others: $adjacentBlockedByOthers",
+                        affectedSeats = adjacentBlockedByOthers.toSet()
                     )
                 }
             }
