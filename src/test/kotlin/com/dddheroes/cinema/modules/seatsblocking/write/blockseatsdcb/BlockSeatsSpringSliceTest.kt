@@ -342,6 +342,56 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         }
     }
 
+    @Test
+    fun `blocking seats for one screening does not interfere with another screening`() {
+        val dayScheduleId = DayScheduleId.random()
+        val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
+
+        val movieId = MovieId.random()
+        val screeningA = ScreeningId.random()
+        val screeningB = ScreeningId.random()
+        val sameSeat = SeatNumber(1, 1)
+
+        val ownerA = aBlockadeOwner()
+        val ownerB = aBlockadeOwner()
+
+        sliceUnderTest.Scenario {
+            Given {
+                events(
+                    // Screening A scheduled and seat placed + blocked by ownerA
+                    ScreeningScheduled(
+                        dayScheduleId,
+                        screeningA,
+                        movieId,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(12, 0),
+                        now
+                    ),
+                    SeatPlaced(screeningA, sameSeat, now),
+                    SeatBlocked(screeningA, sameSeat, ownerA, now),
+                    // Screening B scheduled and same seat placed (not blocked)
+                    ScreeningScheduled(
+                        dayScheduleId,
+                        screeningB,
+                        movieId,
+                        LocalTime.of(14, 0),
+                        LocalTime.of(16, 0),
+                        now
+                    ),
+                    SeatPlaced(screeningB, sameSeat, now),
+                )
+            } When {
+                // Block same seat for screening B — should succeed despite being blocked in screening A
+                command(BlockSeats(screeningB, setOf(sameSeat), ownerB, now))
+            } Then {
+                success()
+                events(
+                    SeatBlocked(screeningB, sameSeat, ownerB, now),
+                )
+            }
+        }
+    }
+
     private fun aBlockadeOwner() = "Reservation:${UUID.randomUUID()}"
 
     private fun currentTime() = Instant.now()

@@ -124,9 +124,13 @@ private class EventSourcedState private constructor(val state: State) {
         @JvmStatic
         @EventCriteriaBuilder // @ConsistencyBoundary(Definition/Query/Condition/Lock)
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
+            val screeningId = consistencyBoundary.screeningId.raw
             val seats = EventCriteria.either(
                 consistencyBoundary.seats.map {
-                    EventCriteria.havingTags(Tag.of(CinemaTags.SEAT_ID, it.toString()))
+                    EventCriteria.havingTags(
+                            Tag.of(CinemaTags.SCREENING_ID, screeningId),
+                            Tag.of(CinemaTags.SEAT_ID, it.toString())
+                        )
                         .andBeingOneOfTypes(
                             "SeatsBlocking.SeatPlaced",
                             "SeatsBlocking.SeatBlocked",
@@ -135,7 +139,7 @@ private class EventSourcedState private constructor(val state: State) {
                 }
             )
             val screeningSchedules =
-                EventCriteria.havingTags(Tag.of(CinemaTags.SCREENING_ID, consistencyBoundary.screeningId.raw))
+                EventCriteria.havingTags(Tag.of(CinemaTags.SCREENING_ID, screeningId))
                     .andBeingOneOfTypes("DaySchedule.ScreeningScheduled")
 
             return EventCriteria.either(seats, screeningSchedules)
