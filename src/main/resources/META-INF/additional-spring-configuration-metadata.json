@@ -1,0 +1,114 @@
+{
+  "properties": [
+    {
+      "name": "slices.dayschedule.write.cancelscreening.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the CancelScreening write slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.dayschedule.write.schedulescreening.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the ScheduleScreening write slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.dayschedule.write.createschedule.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the CreateSchedule write slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.dayschedule.read.searchscreenings.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the SearchScreenings read slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.dayschedule.read.getschedulebyid.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the GetScheduleById read slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.dayschedule.automation.whenscreeningscheduledthenplaceseats.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the WhenScreeningScheduledThenPlaceSeats automation slice in the Day Schedule bounded context."
+    },
+    {
+      "name": "slices.seatsblocking.write.blockseat.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the BlockSeat write slice in the Seats Blocking bounded context."
+    },
+    {
+      "name": "slices.seatsblocking.write.blockseats.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the BlockSeats write slice in the Seats Blocking bounded context."
+    },
+    {
+      "name": "slices.seatsblocking.write.placeseat.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the PlaceSeat write slice in the Seats Blocking bounded context."
+    },
+    {
+      "name": "slices.seatsblocking.automation.trendsreporter.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the TrendsReporter automation slice in the Seats Blocking bounded context."
+    },
+    {
+      "name": "slices.adminnotifications.write.readnotification.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the ReadNotification write slice in the Admin Notifications bounded context."
+    },
+    {
+      "name": "slices.adminnotifications.write.sendnotification.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the SendNotification write slice in the Admin Notifications bounded context."
+    },
+    {
+      "name": "slices.adminnotifications.write.starnotification.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the StarNotification write slice in the Admin Notifications bounded context."
+    },
+    {
+      "name": "slices.adminnotifications.automation.notificationviaemail.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the NotificationViaEmail automation slice in the Admin Notifications bounded context."
+    },
+    {
+      "name": "slices.issues.write.openissue.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the OpenIssue write slice in the Issues bounded context."
+    },
+    {
+      "name": "slices.issues.automation.aiissueforwarder.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the AiIssueForwarder automation slice in the Issues bounded context."
+    },
+    {
+      "name": "slices.reservations.write.startreservation.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the StartReservation write slice in the Reservations bounded context."
+    },
+    {
+      "name": "slices.reservations.write.confirmseats.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the ConfirmSeats write slice in the Reservations bounded context."
+    },
+    {
+      "name": "slices.reservations.write.cancelreservation.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the CancelReservation write slice in the Reservations bounded context."
+    },
+    {
+      "name": "slices.reservations.write.collectreservation.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the CollectReservation write slice in the Reservations bounded context."
+    },
+    {
+      "name": "slices.reservations.automation.blockingseats.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the BlockingSeats automation slice in the Reservations bounded context."
+    },
+    {
+      "name": "slices.reservations.automation.reservationexpiration.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the ReservationExpiration automation slice in the Reservations bounded context."
+    }
+  ]
+}
