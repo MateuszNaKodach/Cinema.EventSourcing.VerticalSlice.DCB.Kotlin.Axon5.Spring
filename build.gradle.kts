@@ -49,6 +49,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("io.rest-assured:spring-mock-mvc-kotlin-extensions:6.0.0")
     testImplementation("org.axonframework:axon-test:${property("axonFrameworkVersion")}")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")

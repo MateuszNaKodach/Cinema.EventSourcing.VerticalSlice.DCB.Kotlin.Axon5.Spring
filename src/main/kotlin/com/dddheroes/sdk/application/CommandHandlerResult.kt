@@ -12,14 +12,23 @@ sealed class CommandHandlerResult {
         if (this is Failure) {
             throw DomainRuleViolatedException(message)
         }
-        return this;
+        return this
     }
 }
 
+@JvmName("resultOfTry")
 inline fun <T, R> T.resultOf(block: T.() -> R): CommandHandlerResult {
     return try {
         block()
         CommandHandlerResult.Success
+    } catch (e: Throwable) {
+        CommandHandlerResult.Failure(e.message ?: "Unknown error")
+    }
+}
+
+inline fun <T> T.resultOf(block: T.() -> CommandHandlerResult): CommandHandlerResult {
+    return try {
+        block()
     } catch (e: Throwable) {
         CommandHandlerResult.Failure(e.message ?: "Unknown error")
     }
@@ -32,5 +41,13 @@ fun <T : DomainEvent> Collection<T>.toCommandResult(): CommandHandlerResult {
     } else {
         val messages = failureEvents.joinToString(", ") { it.reason }
         CommandHandlerResult.Failure(messages)
+    }
+}
+
+fun DomainEvent.toCommandResult(): CommandHandlerResult {
+    return if (this is FailureEvent) {
+        CommandHandlerResult.Failure(this.reason)
+    } else {
+        CommandHandlerResult.Success
     }
 }
