@@ -65,15 +65,12 @@ sealed interface SeatBlockingPolicy {
 
     data object NoSingleEmptySeat : SeatBlockingPolicy {
         override fun expandBoundary(boundary: ConsistencyBoundaryId): ConsistencyBoundaryId {
-            // Expand 2 levels: need neighbor's neighbor to detect if a gap is sandwiched
-            val firstLevel = boundary.seats.flatMap { seat ->
-                listOfNotNull(seat.left(), seat.right())
+            val allSeatsInAffectedRows = boundary.seats.map { it.row }.toSet().flatMap { row ->
+                (SeatNumber.MIN_SEAT_COLUMN..SeatNumber.MAX_SEAT_COLUMN).map { col ->
+                    SeatNumber(row, col)
+                }
             }.toSet()
-            val allSeats = boundary.seats + firstLevel
-            val secondLevel = allSeats.flatMap { seat ->
-                listOfNotNull(seat.left(), seat.right())
-            }.toSet()
-            return boundary.copy(seats = allSeats + secondLevel)
+            return boundary.copy(seats = boundary.seats + allSeatsInAffectedRows)
         }
 
         override fun verify(command: BlockSeats, state: State): PolicyViolation? {

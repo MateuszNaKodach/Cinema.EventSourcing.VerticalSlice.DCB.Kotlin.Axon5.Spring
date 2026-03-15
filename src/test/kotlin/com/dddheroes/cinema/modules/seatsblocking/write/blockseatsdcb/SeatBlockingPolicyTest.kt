@@ -87,27 +87,27 @@ class SeatBlockingPolicyTest {
         }
 
         @Test
-        fun `expands boundary two levels to include neighbors and their neighbors`() {
+        fun `expands boundary to all seats in affected rows`() {
             val boundary = ConsistencyBoundaryId(screeningId, setOf(SeatNumber(1, 5)))
             val expanded = policy.expandBoundary(boundary)
 
-            assert(expanded.seats.contains(SeatNumber(1, 3)))
-            assert(expanded.seats.contains(SeatNumber(1, 4)))
-            assert(expanded.seats.contains(SeatNumber(1, 5)))
-            assert(expanded.seats.contains(SeatNumber(1, 6)))
-            assert(expanded.seats.contains(SeatNumber(1, 7)))
-            assert(expanded.seats.size == 5)
+            val expectedSeats = (SeatNumber.MIN_SEAT_COLUMN..SeatNumber.MAX_SEAT_COLUMN).map { col ->
+                SeatNumber(1, col)
+            }.toSet()
+            assert(expanded.seats == expectedSeats)
         }
 
         @Test
-        fun `does not expand beyond row edges`() {
-            val boundary = ConsistencyBoundaryId(screeningId, setOf(SeatNumber(1, 0)))
+        fun `expands to all columns for multiple rows`() {
+            val boundary = ConsistencyBoundaryId(screeningId, setOf(SeatNumber(1, 0), SeatNumber(3, 5)))
             val expanded = policy.expandBoundary(boundary)
 
-            assert(expanded.seats.contains(SeatNumber(1, 0)))
-            assert(expanded.seats.contains(SeatNumber(1, 1)))
-            assert(expanded.seats.contains(SeatNumber(1, 2)))
-            assert(expanded.seats.size == 3)
+            val expectedSeats = listOf(1, 3).flatMap { row ->
+                (SeatNumber.MIN_SEAT_COLUMN..SeatNumber.MAX_SEAT_COLUMN).map { col ->
+                    SeatNumber(row, col)
+                }
+            }.toSet()
+            assert(expanded.seats == expectedSeats)
         }
     }
 
