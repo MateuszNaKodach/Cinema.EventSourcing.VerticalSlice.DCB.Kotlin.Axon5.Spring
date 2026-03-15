@@ -16,8 +16,8 @@ import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
 import org.axonframework.extension.spring.stereotype.EventSourced
+import org.axonframework.messaging.commandhandling.annotation.Command
 import org.axonframework.messaging.commandhandling.annotation.CommandHandler
-import org.axonframework.messaging.core.QualifiedName
 import org.axonframework.messaging.eventhandling.gateway.EventAppender
 import org.axonframework.messaging.eventstreaming.EventCriteria
 import org.axonframework.messaging.eventstreaming.Tag
@@ -36,6 +36,7 @@ data class ConsistencyBoundaryId(
     val seats: Set<SeatNumber>
 )
 
+@Command(namespace = "SeatsBlocking", name = "BlockSeats", version = "1.0.0")
 data class BlockSeats(
     val screeningId: ScreeningId,
     val seats: Set<SeatNumber>,
@@ -127,15 +128,15 @@ private class EventSourcedState private constructor(val state: State) {
                 consistencyBoundary.seats.map {
                     EventCriteria.havingTags(Tag.of(CinemaTags.SEAT_ID, it.toString()))
                         .andBeingOneOfTypes(
-                            QualifiedName(SeatPlaced::class.java),
-                            QualifiedName(SeatBlocked::class.java),
-                            QualifiedName(SeatUnblocked::class.java),
+                            "SeatsBlocking.SeatPlaced",
+                            "SeatsBlocking.SeatBlocked",
+                            "SeatsBlocking.SeatUnblocked",
                         )
                 }
             )
             val screeningSchedules =
                 EventCriteria.havingTags(Tag.of(CinemaTags.SCREENING_ID, consistencyBoundary.screeningId.raw))
-                    .andBeingOneOfTypes(QualifiedName(ScreeningScheduled::class.java))
+                    .andBeingOneOfTypes("DaySchedule.ScreeningScheduled")
 
             return EventCriteria.either(seats, screeningSchedules)
         }
