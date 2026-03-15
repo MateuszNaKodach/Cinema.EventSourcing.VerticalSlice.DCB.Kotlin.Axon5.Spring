@@ -65,10 +65,15 @@ sealed interface SeatBlockingPolicy {
 
     data object NoSingleEmptySeat : SeatBlockingPolicy {
         override fun expandBoundary(boundary: ConsistencyBoundaryId): ConsistencyBoundaryId {
-            val neighbors = boundary.seats.flatMap { seat ->
+            // Expand 2 levels: need neighbor's neighbor to detect if a gap is sandwiched
+            val firstLevel = boundary.seats.flatMap { seat ->
                 listOfNotNull(seat.left(), seat.right())
             }.toSet()
-            return boundary.copy(seats = boundary.seats + neighbors)
+            val allSeats = boundary.seats + firstLevel
+            val secondLevel = allSeats.flatMap { seat ->
+                listOfNotNull(seat.left(), seat.right())
+            }.toSet()
+            return boundary.copy(seats = allSeats + secondLevel)
         }
 
         override fun verify(command: BlockSeats, state: State): PolicyViolation? {
@@ -225,8 +230,10 @@ private class EventSourcedState private constructor(val state: State) {
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
             val seats = EventCriteria.either(
                 consistencyBoundary.seats.map {
-                    EventCriteria.havingTags(Tag.of(CinemaTags.SEAT_ID, it.toString()))
-                        .andBeingOneOfTypes(
+                    EventCriteria.havingTags(
+                        Tag.of(CinemaTags.SEAT_ID, it.toString()),
+                        Tag.of(CinemaTags.SCREENING_ID, consistencyBoundary.screeningId.raw)
+                    ).andBeingOneOfTypes(
                             QualifiedName(SeatPlaced::class.java),
                             QualifiedName(SeatBlocked::class.java),
                             QualifiedName(SeatUnblocked::class.java),

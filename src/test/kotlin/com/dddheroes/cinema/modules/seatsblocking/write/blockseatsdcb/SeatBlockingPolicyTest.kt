@@ -87,14 +87,16 @@ class SeatBlockingPolicyTest {
         }
 
         @Test
-        fun `expands boundary to include left and right neighbors`() {
+        fun `expands boundary two levels to include neighbors and their neighbors`() {
             val boundary = ConsistencyBoundaryId(screeningId, setOf(SeatNumber(1, 5)))
             val expanded = policy.expandBoundary(boundary)
 
+            assert(expanded.seats.contains(SeatNumber(1, 3)))
             assert(expanded.seats.contains(SeatNumber(1, 4)))
             assert(expanded.seats.contains(SeatNumber(1, 5)))
             assert(expanded.seats.contains(SeatNumber(1, 6)))
-            assert(expanded.seats.size == 3)
+            assert(expanded.seats.contains(SeatNumber(1, 7)))
+            assert(expanded.seats.size == 5)
         }
 
         @Test
@@ -104,7 +106,8 @@ class SeatBlockingPolicyTest {
 
             assert(expanded.seats.contains(SeatNumber(1, 0)))
             assert(expanded.seats.contains(SeatNumber(1, 1)))
-            assert(expanded.seats.size == 2)
+            assert(expanded.seats.contains(SeatNumber(1, 2)))
+            assert(expanded.seats.size == 3)
         }
     }
 

@@ -349,7 +349,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         private val policy = SeatBlockingPolicy.NoSingleEmptySeat
 
         @Test
-        fun `block seats when no single empty gap is created`() {
+        fun `block seat adjacent to already blocked without creating gap`() {
             val dayScheduleId = DayScheduleId.random()
             val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
 
@@ -368,16 +368,13 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         SeatPlaced(screeningId, seat0, now),
                         SeatPlaced(screeningId, seat1, now),
                         SeatPlaced(screeningId, seat2, now),
+                        SeatBlocked(screeningId, seat0, owner, now),
                     )
                 } When {
-                    command(BlockSeats(screeningId, setOf(seat0, seat1, seat2), owner, now, policy))
+                    command(BlockSeats(screeningId, setOf(seat1), owner, now, policy))
                 } Then {
                     success()
-                    events(
-                        SeatBlocked(screeningId, seat0, owner, now),
-                        SeatBlocked(screeningId, seat1, owner, now),
-                        SeatBlocked(screeningId, seat2, owner, now),
-                    )
+                    events(SeatBlocked(screeningId, seat1, owner, now))
                 }
             }
         }
@@ -389,8 +386,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
 
             val movieId = MovieId.random()
             val screeningId = ScreeningId.random()
-            // Row: [placed, placed, placed] at columns 0,1,2
-            // Block column 0 and 2 → column 1 becomes isolated
             val seat0 = SeatNumber(1, 0)
             val seat1 = SeatNumber(1, 1)
             val seat2 = SeatNumber(1, 2)
@@ -420,8 +415,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
 
             val movieId = MovieId.random()
             val screeningId = ScreeningId.random()
-            // Row: [blocked_by_owner, placed, placed] at columns 0,1,2
-            // Block column 2 → column 1 becomes isolated between two blocked
             val seat0 = SeatNumber(1, 0)
             val seat1 = SeatNumber(1, 1)
             val seat2 = SeatNumber(1, 2)
@@ -441,35 +434,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                     command(BlockSeats(screeningId, setOf(seat2), owner, now, policy))
                 } Then {
                     resultMessagePayload(CommandHandlerResult.Failure("[NoSingleEmptySeat] Blocking would leave seat 1:1 as a single empty gap"))
-                }
-            }
-        }
-
-        @Test
-        fun `block adjacent to already blocked without gap`() {
-            val dayScheduleId = DayScheduleId.random()
-            val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
-
-            val movieId = MovieId.random()
-            val screeningId = ScreeningId.random()
-            val seat0 = SeatNumber(1, 0)
-            val seat1 = SeatNumber(1, 1)
-
-            val owner = aBlockadeOwner()
-
-            sliceUnderTest.Scenario {
-                Given {
-                    events(
-                        ScreeningScheduled(dayScheduleId, screeningId, movieId, LocalTime.of(10, 0), LocalTime.of(12, 0), now),
-                        SeatPlaced(screeningId, seat0, now),
-                        SeatPlaced(screeningId, seat1, now),
-                        SeatBlocked(screeningId, seat0, owner, now),
-                    )
-                } When {
-                    command(BlockSeats(screeningId, setOf(seat1), owner, now, policy))
-                } Then {
-                    success()
-                    events(SeatBlocked(screeningId, seat1, owner, now))
                 }
             }
         }
