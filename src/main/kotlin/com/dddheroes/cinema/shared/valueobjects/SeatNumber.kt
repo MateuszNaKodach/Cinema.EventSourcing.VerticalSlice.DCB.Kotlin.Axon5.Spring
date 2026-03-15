@@ -7,6 +7,18 @@ data class SeatNumber(val row: Int, val column: Int) {
         require(column in MIN_SEAT_COLUMN..MAX_SEAT_COLUMN) { "Column must be between 0 nad 9" }
     }
 
+    fun left(): SeatNumber? =
+        if (column > MIN_SEAT_COLUMN) SeatNumber(row, column - 1) else null
+
+    fun right(): SeatNumber? =
+        if (column < MAX_SEAT_COLUMN) SeatNumber(row, column + 1) else null
+
+    fun upper(): SeatNumber? =
+        if (row > MIN_SEAT_ROW) SeatNumber(row - 1, column) else null
+
+    fun lower(): SeatNumber? =
+        if (row < MAX_SEAT_ROW) SeatNumber(row + 1, column) else null
+
     override fun toString(): String = "$row:$column"
 
     companion object {

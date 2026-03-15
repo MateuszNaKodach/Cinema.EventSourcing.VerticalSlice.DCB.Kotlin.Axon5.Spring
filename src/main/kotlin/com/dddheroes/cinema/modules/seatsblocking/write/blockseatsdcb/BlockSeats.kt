@@ -12,6 +12,9 @@ import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
+import com.dddheroes.sdk.domain.DomainRuleViolatedException
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
@@ -40,16 +43,105 @@ data class ConsistencyBoundaryId(
     val seats: Set<SeatNumber>
 )
 
+data class PolicyViolation(
+    val policyName: String,
+    val reason: String,
+    val affectedSeats: Set<SeatNumber> = emptySet()
+)
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = SeatBlockingPolicy.Default::class, name = "Default"),
+    JsonSubTypes.Type(value = SeatBlockingPolicy.NoSingleEmptySeat::class, name = "NoSingleEmptySeat"),
+    JsonSubTypes.Type(value = SeatBlockingPolicy.CovidSpacing::class, name = "CovidSpacing")
+)
+sealed interface SeatBlockingPolicy {
+    fun expandBoundary(boundary: ConsistencyBoundaryId): ConsistencyBoundaryId = boundary
+    fun verify(command: BlockSeats, state: State): PolicyViolation?
+
+    data object Default : SeatBlockingPolicy {
+        override fun verify(command: BlockSeats, state: State): PolicyViolation? = null
+    }
+
+    data object NoSingleEmptySeat : SeatBlockingPolicy {
+        override fun expandBoundary(boundary: ConsistencyBoundaryId): ConsistencyBoundaryId {
+            val neighbors = boundary.seats.flatMap { seat ->
+                listOfNotNull(seat.left(), seat.right())
+            }.toSet()
+            return boundary.copy(seats = boundary.seats + neighbors)
+        }
+
+        override fun verify(command: BlockSeats, state: State): PolicyViolation? {
+            val simulatedBlockade = state.blockadeBySeat.toMutableMap()
+            command.seats.forEach { seat ->
+                if (simulatedBlockade[seat] == null) {
+                    simulatedBlockade[seat] = command.blockadeOwner
+                }
+            }
+
+            val affectedRows = command.seats.map { it.row }.toSet()
+            for (row in affectedRows) {
+                val seatsInRow = simulatedBlockade.keys
+                    .filter { it.row == row }
+                    .sortedBy { it.column }
+
+                for (seat in seatsInRow) {
+                    if (simulatedBlockade[seat] != null) continue
+                    val leftBlocked = seat.left()?.let { simulatedBlockade[it] != null } ?: true
+                    val rightBlocked = seat.right()?.let { simulatedBlockade[it] != null } ?: true
+                    if (leftBlocked && rightBlocked) {
+                        return PolicyViolation(
+                            policyName = "NoSingleEmptySeat",
+                            reason = "Blocking would leave seat $seat as a single empty gap",
+                            affectedSeats = setOf(seat)
+                        )
+                    }
+                }
+            }
+            return null
+        }
+    }
+
+    data object CovidSpacing : SeatBlockingPolicy {
+        override fun expandBoundary(boundary: ConsistencyBoundaryId): ConsistencyBoundaryId {
+            val neighbors = boundary.seats.flatMap { seat ->
+                listOfNotNull(seat.left(), seat.right(), seat.upper(), seat.lower())
+            }.toSet()
+            return boundary.copy(seats = boundary.seats + neighbors)
+        }
+
+        override fun verify(command: BlockSeats, state: State): PolicyViolation? {
+            for (seat in command.seats) {
+                val adjacentBlockedByOthers = listOfNotNull(
+                    seat.left(), seat.right(), seat.upper(), seat.lower()
+                ).filter { adj ->
+                    val owner = state.blockadeBySeat[adj]
+                    owner != null && owner != command.blockadeOwner
+                }
+                if (adjacentBlockedByOthers.isNotEmpty()) {
+                    return PolicyViolation(
+                        policyName = "CovidSpacing",
+                        reason = "Seat $seat is adjacent to seats blocked by others: $adjacentBlockedByOthers",
+                        affectedSeats = adjacentBlockedByOthers.toSet()
+                    )
+                }
+            }
+            return null
+        }
+    }
+}
+
 data class BlockSeats(
     val screeningId: ScreeningId,
     val seats: Set<SeatNumber>,
     val blockadeOwner: String,
-    val issuedAt: Instant
+    val issuedAt: Instant,
+    val policy: SeatBlockingPolicy = SeatBlockingPolicy.Default
 ) {
-    val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
+    val consistencyBoundaryId = policy.expandBoundary(ConsistencyBoundaryId(screeningId, seats))
 }
 
-private data class State(
+data class State(
     val blockadeBySeat: Map<SeatNumber, String?> = emptyMap(),
     val screeningEndTime: Instant? = null
 )
@@ -77,6 +169,11 @@ private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
 
     if (seatsBlockedByOthers.isNotEmpty()) {
         throw kotlin.IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
+    }
+
+    val violation = command.policy.verify(command, state)
+    if (violation != null) {
+        throw DomainRuleViolatedException("[${violation.policyName}] ${violation.reason}")
     }
 
     return command.seats.mapNotNull { seat ->
