@@ -13,21 +13,17 @@ import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
-import org.axonframework.eventsourcing.annotation.EventSourcedEntity
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
-import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule
+import org.axonframework.extension.spring.stereotype.EventSourced
 import org.axonframework.messaging.commandhandling.annotation.CommandHandler
-import org.axonframework.messaging.commandhandling.configuration.CommandHandlingModule
 import org.axonframework.messaging.core.QualifiedName
 import org.axonframework.messaging.eventhandling.gateway.EventAppender
 import org.axonframework.messaging.eventstreaming.EventCriteria
 import org.axonframework.messaging.eventstreaming.Tag
 import org.axonframework.modelling.annotation.InjectEntity
-import org.axonframework.modelling.configuration.EntityModule
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -104,7 +100,8 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ////////// Application
 ///////////////////////////////////////////
 
-@EventSourcedEntity // @ConsistencyBoundary
+@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
+@EventSourced(idType = ConsistencyBoundaryId::class) // @ConsistencyBoundary
 private class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
@@ -145,6 +142,8 @@ private class EventSourcedState private constructor(val state: State) {
     }
 }
 
+@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
+@Component
 private class BlockSeatsCommandHandler {
 
     @CommandHandler
@@ -158,23 +157,4 @@ private class BlockSeatsCommandHandler {
         return events.toCommandResult()
     }
 
-}
-
-@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
-@Configuration
-private class BlockSeatsWriteSliceConfig {
-
-    @Bean
-    fun blockSeatsState(): EntityModule<*, *> =
-        EventSourcedEntityModule.autodetected(
-            ConsistencyBoundaryId::class.java,
-            EventSourcedState::class.java
-        )
-
-    @Bean
-    fun blockSeatsSlice(): CommandHandlingModule =
-        CommandHandlingModule.named(BlockSeats::class.simpleName!!)
-            .commandHandlers()
-            .autodetectedCommandHandlingComponent { BlockSeatsCommandHandler() }
-            .build()
 }
