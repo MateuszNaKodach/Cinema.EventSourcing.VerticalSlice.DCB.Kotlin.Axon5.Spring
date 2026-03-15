@@ -49,7 +49,7 @@ data class BlockSeats(
     val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
 }
 
-internal data class State(
+private data class State(
     val blockadeBySeat: Map<SeatNumber, String?> = emptyMap(),
     val screeningEndTime: Instant? = null
 )
@@ -105,7 +105,7 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ///////////////////////////////////////////
 
 @EventSourcedEntity // @ConsistencyBoundary
-internal class EventSourcedState private constructor(val state: State) {
+private class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
     constructor() : this(State())
@@ -162,10 +162,10 @@ private class BlockSeatsCommandHandler {
 
 @ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
 @Configuration
-internal class BlockSeatsWriteSliceConfig {
+private class BlockSeatsWriteSliceConfig {
 
     @Bean
-    fun blockSeatsState(): EntityModule<ConsistencyBoundaryId, EventSourcedState> =
+    fun blockSeatsState(): EntityModule<*, *> =
         EventSourcedEntityModule.autodetected(
             ConsistencyBoundaryId::class.java,
             EventSourcedState::class.java
