@@ -10,22 +10,15 @@ import io.restassured.module.mockmvc.kotlin.extensions.When
 import org.axonframework.extensions.spring.test.AxonGatewaysMock
 import org.axonframework.extensions.spring.test.AxonGatewaysMockTest
 import org.hamcrest.Matchers.equalTo
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.TestPropertySource
-import java.time.Instant
 
 @RestAssuredMockMvcTest
 @AxonGatewaysMockTest
 @TestPropertySource(properties = ["slices.seatsblocking.write.unblockseats.enabled=true"])
 class UnblockSeatsRestApiTest @Autowired constructor(val gateways: AxonGatewaysMock) {
-
-    @BeforeEach
-    fun setUp() {
-        gateways.currentTimeIs(Instant.now())
-    }
 
     @Test
     fun `command success - returns 204 No Content`() {
