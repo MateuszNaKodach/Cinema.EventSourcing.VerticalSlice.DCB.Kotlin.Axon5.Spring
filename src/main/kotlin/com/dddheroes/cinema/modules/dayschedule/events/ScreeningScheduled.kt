@@ -20,13 +20,3 @@ data class ScreeningScheduled(
     val endTime: LocalTime,
     override val occurredAt: Instant
 ) : DayScheduleEvent
-
-// if we want: cannot reserve seat after screening finished - we can couple togherther in one transaction.
-// no-one can edit screening like reserving seat, cognitive load increase - someome who program blocking seat / reservations must know that
-// if we agree for eventual consistency it's easier to keep them separate
-
-
-// todo: sprawdzic slownik:
-// The correct English translation for "seans filmowy" is typically "film screening" or simply "screening". While "screening" is sometimes used informally, "screening" is the more accurate and commonly used term in contexts related to movies.
-//
-//So, for a movie event, "film screening" is preferred over "film screening" or "screening"
