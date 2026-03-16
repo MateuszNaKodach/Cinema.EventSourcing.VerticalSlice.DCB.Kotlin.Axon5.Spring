@@ -125,7 +125,15 @@ Before creating anything, **plan the full chapter structure**:
 2. `add_slice` with descriptive label at the right index and `status: "blocked"` (specification in progress)
 3. `add_element` — `automation` or `ui` in the `user-lane`
 4. `add_element` — `command` in the `information-flow` lane, same slice
-5. `add_element` — `event` in the `system` lane, same slice
+5. `add_element` — `event`(s) in the `system` lane, same slice
+
+#### Per-Item Event Cardinality (STRICT)
+
+When a command's description shows an **array property** with N example items (e.g., `seats: [1:1, 1:2, 2:1]`), and the resulting event is produced **per item** (not per batch), place **N separate event elements** on the board — one for each item. Each event element's description should contain the corresponding example value from the command's array.
+
+Example: Command "Block Seats" with `seats: [1:1, 1:2, 2:1]` produces 3 separate "Seat Blocked" event elements with `seat: 1:1`, `seat: 1:2`, and `seat: 2:1` respectively.
+
+This rule does **not** apply when a single event captures the entire batch (e.g., `SeatsBlocked` with `seats: [...]`).
 
 ### Add a Read Slice (Event → Information)
 1. `add_slice` with descriptive label at the right index (after the write slice whose events feed it) and `status: "blocked"` (specification in progress)
