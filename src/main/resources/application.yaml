@@ -59,6 +59,8 @@ slices:
         enabled: true
       blockseats:
         enabled: true
+      unblockseats:
+        enabled: true
       placeseat:
         enabled: true
     automation:

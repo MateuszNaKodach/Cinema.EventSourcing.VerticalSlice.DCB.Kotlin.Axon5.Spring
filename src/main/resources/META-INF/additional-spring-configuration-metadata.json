@@ -41,6 +41,11 @@
       "description": "Enable/disable the BlockSeats write slice in the Seats Blocking bounded context."
     },
     {
+      "name": "slices.seatsblocking.write.unblockseats.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/disable the UnblockSeats write slice in the Seats Blocking bounded context."
+    },
+    {
       "name": "slices.seatsblocking.write.placeseat.enabled",
       "type": "java.lang.Boolean",
       "description": "Enable/disable the PlaceSeat write slice in the Seats Blocking bounded context."
