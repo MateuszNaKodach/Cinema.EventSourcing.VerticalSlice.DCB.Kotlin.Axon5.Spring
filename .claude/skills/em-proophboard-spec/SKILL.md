@@ -485,6 +485,8 @@ blocked → planned → in-progress → ready → deployed
 
 Use `update_slice_status` with both `old_status` and `new_status`.
 
+**Independent slice status verification (STRICT):** Each slice's status must be determined independently. A write slice having code does NOT mean the follow-up read slice is also implemented — the read model's projection may not handle the new events yet. When adding slices, check the status of existing equivalent slices on the board (e.g., if the first "View Seats" is `planned`, a new "View Seats" read slice should also be `planned`, not `ready`). Never copy a write slice's status to its follow-up read slice without verifying the read model implementation separately.
+
 Derive implementation tasks from the event model — **one task per slice**. Update progress on proophboard using slice status as implementation proceeds.
 
 ### Monitor Board Changes
