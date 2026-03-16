@@ -148,27 +148,34 @@ After the flow structure is modeled and validated, enrich elements with details:
 
 1. **Element description with properties** (optional): Add property names with example values or types directly in the element description via `update_element_description`. This makes properties visible on the board card itself. **Ask the user** whether to add description properties — it's not required.
 2. **Element details**: Add detailed descriptions, JSON examples, JSON Schema, validation rules, and business rules via `update_element_details` / `update_element_description`
-3. **UI mockups**: Add ASCII mockups to the `details` field of UI elements
+3. **UI details**: Add relevant documentation to the `details` field of UI elements:
+   - **REST API endpoints**: When a UI element represents a REST endpoint, add **OpenAPI specification** (in YAML) to its details. Derive from the `@RestController`: HTTP method, path, path parameters, request body schema. **Exclude server-side fields** from the request body (e.g., timestamps set by `Clock`, fields computed internally).
+   - **UI mockups**: Add ASCII mockups for frontend screens
 4. **Slice details**: Add business rules and Given-When-Then scenarios to slice details via `update_slice_details` (see [Slice GWT Scenarios](#slice-gwt-scenarios) below)
+
+**When modeling from existing code** (code/tests already exist): proactively add Example + JSON Schema to command and event element details without asking — the data shapes are already known from the code. Read value objects and event/command classes to derive the full JSON structure. Also add OpenAPI to UI elements that wrap REST endpoints.
 
 #### Element Description Properties (Optional)
 
 Element descriptions can list properties with example values or types. These are shown directly on the board card, making the data shape visible at a glance. Use `update_element_description` to set this.
 
-**Format**: each property on its own line. End each line with **two trailing spaces** (`  `) to force a line break in markdown.
+**Default format**: use a ` ```yaml``` ` code block. This avoids newline escaping issues and renders reliably on proophboard.
 
 Example for a "Build Dwelling" command:
-```
+````
+```yaml
 dwellingId: uuid
 creatureId: Angel
 costPerTroop: {gold: 3000, gems: 1}
 ```
+````
 
-Example for a "Dwelling Built" event:
+**Alternative format**: each property on its own line with **two trailing spaces** (`  `) to force a line break in markdown. This also works but is more error-prone.
+
 ```
-dwellingId: uuid
-creatureId: Angel
-costPerTroop: {gold: 3000, gems: 1}
+dwellingId: uuid··
+creatureId: Angel··
+costPerTroop: {gold: 3000, gems: 1}··
 ```
 
 **Guidelines:**
@@ -382,8 +389,8 @@ Example of details for a command element:
 ````
 
 **Guidelines for element details:**
-- Event modeling typically happens **before code exists** — propose domain-meaningful example values and ask the user to confirm or adjust before writing
-- In the less common case where code/tests already exist, derive example values from them for consistency. Read value objects and event classes to understand the full data shape — unwrap `value class` / `@JvmInline` wrappers to their raw type, and flatten nested data classes (e.g., `MonthWeek(month, week)` becomes separate `month` and `week` fields in JSON)
+- **When code/tests already exist** (reverse-engineering to board): **proactively add** Example + JSON Schema to command and event elements without asking — the data shapes are already known. Read value objects and event/command classes to derive the full JSON structure. Unwrap `value class` / `@JvmInline` wrappers to their raw type, and flatten nested data classes (e.g., `MonthWeek(month, week)` becomes separate `month` and `week` fields in JSON). Also add OpenAPI to UI elements that wrap REST endpoints.
+- **When modeling from scratch** (no code yet): propose domain-meaningful example values and ask the user to confirm or adjust before writing
 - Use meaningful IDs (e.g., `"portal-of-glory"` not `"uuid-123"`)
 - JSON Schema should match the intended data structure (value classes unwrap to their raw type)
 - When updating details, always pass the **complete new content** to `update_element_details` — partial string replacements cause conflicts on proophboard
