@@ -1,4 +1,4 @@
-package com.dddheroes.cinema.modules.seatsblocking.write.blockseatsdcb
+package com.dddheroes.cinema.modules.seatsblocking.write.blockseats
 
 import com.dddheroes.cinema.CinemaTags
 import com.dddheroes.cinema.modules.dayschedule.events.ScreeningScheduled
