@@ -11,6 +11,7 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandHandlerResult
+import com.dddheroes.sdk.application.CommandHandlerResult.Failure
 import org.axonframework.test.fixture.AxonTestFixture
 import org.axonframework.test.fixture.Given
 import org.axonframework.test.fixture.Scenario
@@ -93,7 +94,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, now))
             } Then {
-                resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - screening not scheduled yet"))
+                resultMessagePayload(Failure("Cannot block seats - screening not scheduled yet"))
             }
         }
     }
@@ -131,7 +132,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, afterScreeningEndTime))
             } Then {
-                resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - screening has already ended"))
+                resultMessagePayload(Failure("Cannot block seats - screening has already ended"))
             }
         }
     }
@@ -169,7 +170,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, now))
             } Then {
-                resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - must be placed first"))
+                resultMessagePayload(Failure("Cannot block seats - must be placed first"))
             }
         }
     }
@@ -179,7 +180,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         val dayScheduleId = DayScheduleId.random()
         val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
 
-        val movieId = MovieId.random()
         val screeningId = ScreeningId.random()
         val seatRow1Col1 = SeatNumber(1, 1)
         val seatRow1Col2 = SeatNumber(1, 2)
@@ -192,25 +192,15 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         sliceUnderTest.Scenario {
             Given {
                 events(
-                    ScreeningScheduled(
-                        dayScheduleId,
-                        screeningId,
-                        movieId,
-                        LocalTime.of(10, 0),
-                        LocalTime.of(12, 0),
-                        now
-                    ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    SeatPlaced(screeningId, seatRow1Col3, now),
-                    // Some seats are already blocked by ownerA
                     SeatBlocked(screeningId, seatRow1Col1, ownerA, now),
                     SeatBlocked(screeningId, seatRow1Col2, ownerA, now),
                 )
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), ownerB, now))
             } Then {
-                resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - some seats are already blocked by others: [1:1, 1:2]"))
+                resultMessagePayload(
+                    Failure("Cannot block seats - some seats are already blocked by others: [1:1, 1:2]")
+                )
             }
         }
     }
