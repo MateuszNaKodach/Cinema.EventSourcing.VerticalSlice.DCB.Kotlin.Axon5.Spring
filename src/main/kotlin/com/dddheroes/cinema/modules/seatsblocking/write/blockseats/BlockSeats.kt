@@ -12,20 +12,30 @@ import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
+import com.dddheroes.sdk.restapi.toResponseEntity
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
 import org.axonframework.eventsourcing.annotation.reflection.EntityCreator
 import org.axonframework.extension.spring.stereotype.EventSourced
 import org.axonframework.messaging.commandhandling.annotation.Command
 import org.axonframework.messaging.commandhandling.annotation.CommandHandler
+import org.axonframework.messaging.commandhandling.gateway.CommandGateway
 import org.axonframework.messaging.eventhandling.gateway.EventAppender
 import org.axonframework.messaging.eventstreaming.EventCriteria
 import org.axonframework.messaging.eventstreaming.Tag
 import org.axonframework.modelling.annotation.InjectEntity
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.concurrent.CompletableFuture
 
 ////////////////////////////////////////////
 ////////// Domain
@@ -162,4 +172,36 @@ private class BlockSeatsCommandHandler {
         return events.toCommandResult()
     }
 
+}
+
+////////////////////////////////////////////
+////////// Presentation
+///////////////////////////////////////////
+
+@ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
+@RestController
+@RequestMapping("screenings/{screeningId}")
+private class BlockSeatsRestApi(
+    private val commandGateway: CommandGateway,
+    private val clock: Clock
+) {
+
+    @JvmRecord
+    data class Body(val seats: List<String>, val blockadeOwner: String)
+
+    @PostMapping("/seats-blockades")
+    fun blockSeats(
+        @PathVariable screeningId: String,
+        @RequestBody body: Body
+    ): CompletableFuture<ResponseEntity<Any>> {
+        val command = BlockSeats(
+            screeningId = ScreeningId.of(screeningId),
+            seats = body.seats.map { SeatNumber.from(it) }.toSet(),
+            blockadeOwner = body.blockadeOwner,
+            issuedAt = Instant.now(clock)
+        )
+        return commandGateway.send(command)
+            .resultAs(CommandHandlerResult::class.java)
+            .toResponseEntity()
+    }
 }
