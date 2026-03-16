@@ -74,6 +74,11 @@ Chapter (a user journey / business process path)
 ### Shared UI Naming
 - When a UI element serves as both a read view and a trigger for a subsequent write slice, use the **same name** on both slices (e.g., "Army Creatures" on the read slice UI and the next write slice UI) to indicate they represent the same screen.
 
+### proophboard Rendering Limitations (STRICT)
+- **Markdown tables do NOT render on proophboard.** Use lists, code blocks, or plain text formatting instead.
+- Supported: headings, bold, italic, code blocks (` ```lang``` `), lists, `:::element` blocks, inline code
+- Unsupported: tables (`| col | col |`), HTML tags
+
 ### Automatic Arrows (no manual wiring needed)
 Connections are drawn automatically when elements are placed correctly:
 - UI/Automation → Command (same slice)
@@ -252,6 +257,8 @@ NOTHING
 
 **Read slice** — `Given (events) → Then (information)` — no When block:
 
+**Always include the query key** (e.g., `screeningId`) in each `:::element information` block — it shows which entity the read model returns data for and makes the behavior explicit, especially in multi-entity scenarios.
+
 When a read slice returns **multiple items** in the Then section, choose between two formats:
 
 **Option A — Separate blocks (default)**: Each item as its own `:::element information` block. Best when items have many properties or you're testing specific items individually.
@@ -366,6 +373,24 @@ Use `NOTHING` for:
 
 Slice documentation may include a `## Implementation Guidelines` section with Backend and/or Frontend subsections. These contain specific technical requirements for the slice (e.g., integrate with a payment provider, create an S3 bucket, use a specific library). When present, these guidelines **must be followed** during implementation — they take priority over generic patterns.
 
+#### Tags (DCB) Section for Events
+
+When an event has tagged properties (for Dynamic Consistency Boundary), add a `## Tags (DCB) 🏷️` section at the **top** of the event's details, before Example and JSON Schema. This documents which properties become event tags and what their tag keys are.
+
+**Format:**
+```
+## Tags (DCB) 🏷️
+
+*key* -> `property` (example value)
+*screeningId* -> `screeningId` ("b47d2e1f-3c8a-4f5b-9d6e-1a2b3c4d5e6f")
+*seatId* -> `seat` ("1:1")
+```
+
+- First line is a legend: `*key* -> \`property\` (example value)`
+- Each subsequent line maps a tag key to the property it comes from, with an example value from the `## Example` section below
+- Use `*italic*` for tag keys, `` `backticks` `` for property names
+- When modeling from code, derive tag keys from `@EventTag(key = ...)` annotations
+
 #### Element Details Format
 
 The `details` field supports markdown and has no strict structure — it can contain whatever is useful for the element. Common content for commands and events includes:
@@ -424,7 +449,7 @@ Example of details for a command element:
 - **When modeling from scratch** (no code yet): propose domain-meaningful example values and ask the user to confirm or adjust before writing
 - Use meaningful IDs (e.g., `"portal-of-glory"` not `"uuid-123"`)
 - JSON Schema should match the intended data structure (value classes unwrap to their raw type)
-- When updating details, always pass the **complete new content** to `update_element_details` — partial string replacements cause conflicts on proophboard
+- **CRITICAL — `update_element_details` safety**: NEVER pass partial `old_details`. Always call `get_chapter` first to read the current full details, then pass the **complete** current content as `old_details` and the **complete** desired content as `new_details`. Passing only a section as `old_details` will replace the entire details field and destroy everything else (Example, JSON Schema, etc.)
 
 ### Specification Lifecycle
 
