@@ -252,11 +252,63 @@ NOTHING
 
 **Read slice** — `Given (events) → Then (information)` — no When block:
 
-When a read slice returns **multiple items**, show each as a **separate `:::element information` block** in the Then section. Never wrap results in an `items` array property.
+When a read slice returns **multiple items** in the Then section, choose between two formats:
+
+**Option A — Separate blocks (default)**: Each item as its own `:::element information` block. Best when items have many properties or you're testing specific items individually.
 
 ```markdown
 ## Scenarios (GWTs)
 
+### 1. given two dwellings built, then both returned
+
+**Given**
+:::element event
+Dwelling Built··
+dwellingId: portal-of-glory··
+:::
+:::element event
+Dwelling Built··
+dwellingId: cursed-temple··
+:::
+**Then**
+:::element information
+Dwelling··
+dwellingId: portal-of-glory··
+:::
+:::element information
+Dwelling··
+dwellingId: cursed-temple··
+:::
+```
+
+**Option B — Single block with list**: One `:::element information` block using yaml or json list notation inside. Best when the read model is conceptually one response containing a list and items are simple.
+
+```markdown
+### 1. given seats placed, then show all as available
+
+**Given**
+:::element event
+Seat Placed··
+screeningId: screening-1··
+seat: 1:1··
+:::
+:::element event
+Seat Placed··
+screeningId: screening-1··
+seat: 1:2··
+:::
+**Then**
+:::element information
+Screening Seats··
+seats:··
+  - seat: 1:1, blockadeOwner: null··
+  - seat: 1:2, blockadeOwner: null··
+:::
+```
+
+**Single item** — always use a single block:
+
+```markdown
 ### 1. given creatures added, then show army
 
 **Given**
@@ -270,27 +322,6 @@ quantity: 5··
 Army Creatures··
 creatureId: Angel··
 quantity: 5··
-:::
-
-### 2. given two dwellings built, then both returned
-
-**Given**
-:::element event
-Dwelling Built··
-dwellingId: portal-of-glory··
-:::
-:::element event
-Dwelling Built··
-dwellingId: cursed-temple··
-:::
-**Then**
-:::element information
-Dwelling··
-dwellingId: portal-of-glory··
-:::
-:::element information
-Dwelling··
-dwellingId: cursed-temple··
 :::
 ```
 
