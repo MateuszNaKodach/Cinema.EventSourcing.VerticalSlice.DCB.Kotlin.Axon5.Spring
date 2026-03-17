@@ -52,9 +52,7 @@ data class BlockSeats(
     val seats: Set<SeatNumber>,
     val blockadeOwner: String,
     val issuedAt: Instant
-) {
-    val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
-}
+)
 
 private data class State(
     val blockadeBySeat: Map<SeatNumber, String?> = emptyMap(),
@@ -132,21 +130,11 @@ private class EventSourcedState private constructor(val state: State) {
 
     companion object {
         @JvmStatic
-        @EventCriteriaBuilder // @ConsistencyBoundary(Definition/Query/Condition/Lock)
+        @EventCriteriaBuilder
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
             val screeningId = consistencyBoundary.screeningId.raw
             val seats = EventCriteria.either(
-                consistencyBoundary.seats.map {
-                    EventCriteria.havingTags(
-                            Tag.of(CinemaTags.SCREENING_ID, screeningId),
-                            Tag.of(CinemaTags.SEAT_ID, it.toString())
-                        )
-                        .andBeingOneOfTypes(
-                            "SeatsBlocking.SeatPlaced",
-                            "SeatsBlocking.SeatBlocked",
-                            "SeatsBlocking.SeatUnblocked",
-                        )
-                }
+                /*seats events*/
             )
             val screeningSchedules =
                 EventCriteria.havingTags(Tag.of(CinemaTags.SCREENING_ID, screeningId))
@@ -154,6 +142,19 @@ private class EventSourcedState private constructor(val state: State) {
 
             return EventCriteria.either(seats, screeningSchedules)
         }
+
+        private fun seatCriteria(
+            screeningId: String,
+            number: SeatNumber
+        ): EventCriteria? = EventCriteria.havingTags(
+            Tag.of(CinemaTags.SCREENING_ID, screeningId),
+            Tag.of(CinemaTags.SEAT_ID, number.toString())
+        )
+            .andBeingOneOfTypes(
+                "SeatsBlocking.SeatPlaced",
+                "SeatsBlocking.SeatBlocked",
+                "SeatsBlocking.SeatUnblocked",
+            )
     }
 }
 
