@@ -10,7 +10,6 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
-import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.CommandHandlerResult.Failure
 import org.axonframework.test.fixture.AxonTestFixture
 import org.axonframework.test.fixture.Given
@@ -186,20 +185,37 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         val seatRow1Col3 = SeatNumber(1, 3)
         val seats = listOf(seatRow1Col1, seatRow1Col2, seatRow1Col3)
 
-        val ownerA = aBlockadeOwner()
-        val ownerB = aBlockadeOwner()
+        val reservation1 = aBlockadeOwner()
+        val reservation2 = aBlockadeOwner()
 
         sliceUnderTest.Scenario {
             Given {
                 events(
-                    SeatBlocked(screeningId, seatRow1Col1, ownerA, now),
-                    SeatBlocked(screeningId, seatRow1Col2, ownerA, now),
+                    SeatBlocked(
+                        screeningId,
+                        seatRow1Col1,
+                        reservation1,
+                        now
+                    ),
+                    SeatBlocked(
+                        screeningId,
+                        seatRow1Col2,
+                        reservation1,
+                        now
+                    ),
                 )
             } When {
-                command(BlockSeats(screeningId, seats.toSet(), ownerB, now))
+                command(BlockSeats(
+                    screeningId,
+                    seats.toSet(),
+                    reservation2,
+                    now)
+                )
             } Then {
                 resultMessagePayload(
-                    Failure("Cannot block seats - some seats are already blocked by others: [1:1, 1:2]")
+                    Failure(
+                        "Cannot block seats - some seats are already blocked by others: [1:1, 1:2]"
+                    )
                 )
             }
         }
