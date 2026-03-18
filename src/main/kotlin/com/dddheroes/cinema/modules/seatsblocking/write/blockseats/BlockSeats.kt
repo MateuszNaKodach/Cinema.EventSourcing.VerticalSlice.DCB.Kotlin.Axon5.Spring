@@ -61,6 +61,8 @@ private data class State(
     val screeningEndTime: Instant? = null
 )
 
+private val initialState = State()
+
 private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
     checkNotNull(state.screeningEndTime) { "Cannot block seats - screening not scheduled yet" }
     check(!command.issuedAt.isAfter(state.screeningEndTime)) {
@@ -111,7 +113,7 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 private class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
-    constructor() : this(State())
+    constructor() : this(initialState)
 
     @EventSourcingHandler
     fun evolve(event: SeatPlaced) = EventSourcedState(evolve(state, event))
