@@ -139,7 +139,7 @@ match their type pattern. Annotate with `@Command(namespace = "<BoundedContext>"
 **State**: Private. Immutable data class. Contains ONLY fields needed by `decide()`. Companion `initialState` val.
 
 **decide()**: Private standalone function. Takes `(command, state)`, returns event(s). No side effects. Enforce rules
-here: throw `IllegalStateException` for violations, return `emptyList()` for idempotent no-ops.
+here: use `check()` / `checkNotNull()` for violations (they throw `IllegalStateException`), return `emptyList()` for idempotent no-ops.
 
 **evolve()**: Private standalone function. Takes `(state, event)`, returns new State. Uses `when (event: SealedType)` over the sealed interface.
 
