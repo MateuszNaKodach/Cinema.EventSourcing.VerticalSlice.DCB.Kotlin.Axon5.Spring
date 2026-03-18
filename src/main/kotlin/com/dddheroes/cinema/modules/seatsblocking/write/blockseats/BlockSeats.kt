@@ -62,35 +62,30 @@ private data class State(
 )
 
 private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
-    if (state.screeningEndTime == null) {
-        throw IllegalStateException("Cannot block seats - screening not scheduled yet")
-    }
-    if (command.issuedAt.isAfter(state.screeningEndTime)) {
-        throw IllegalStateException("Cannot block seats - screening has already ended")
-    }
-    // Check if seats are placed (exist in state map)
-    val seatsNotPlaced = command.seats.filter { seat ->
-        !state.blockadeBySeat.containsKey(seat)
+    checkNotNull(state.screeningEndTime) { "Cannot block seats - screening not scheduled yet" }
+    check(!command.issuedAt.isAfter(state.screeningEndTime)) {
+        "Cannot block seats - screening has already ended"
     }
 
-    if (seatsNotPlaced.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - must be placed first")
-    }
+    val seatsNotPlaced = command.seats.filterNot { it in state.blockadeBySeat }
+    check(seatsNotPlaced.isEmpty()) { "Cannot block seats - must be placed first" }
 
     val seatsBlockedByOthers = command.seats.filter { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        blockedBy != null && blockedBy != command.blockadeOwner
+        state.blockadeBySeat[seat].let { it != null && it != command.blockadeOwner }
     }
-
-    if (seatsBlockedByOthers.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
+    check(seatsBlockedByOthers.isEmpty()) {
+        "Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers"
     }
 
     return command.seats.mapNotNull { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        when (blockedBy) {
-            null -> SeatBlocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
-            command.blockadeOwner -> null // Already blocked by same owner, no event needed
+        val notBlocked = state.blockadeBySeat[seat] == null
+        when {
+            notBlocked -> SeatBlocked(
+                command.screeningId,
+                seat,
+                command.blockadeOwner,
+                command.issuedAt
+            )
             else -> null
         }
     }
