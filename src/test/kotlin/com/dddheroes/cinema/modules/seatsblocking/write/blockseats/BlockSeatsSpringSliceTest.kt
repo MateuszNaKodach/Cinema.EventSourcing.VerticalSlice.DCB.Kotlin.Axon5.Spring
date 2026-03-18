@@ -191,25 +191,11 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         sliceUnderTest.Scenario {
             Given {
                 events(
-                    SeatBlocked(
-                        screeningId,
-                        seatRow1Col1,
-                        reservation1,
-                        now
-                    ),
-                    SeatBlocked(
-                        screeningId,
-                        seatRow1Col2,
-                        reservation1,
-                        now
-                    ),
+                    SeatBlocked(screeningId, seatRow1Col1, reservation1, now),
+                    SeatBlocked(screeningId, seatRow1Col2, reservation1, now),
                 )
             } When {
-                command(BlockSeats(
-                    screeningId,
-                    seats.toSet(),
-                    reservation2,
-                    now)
+                command(BlockSeats(screeningId, seats.toSet(), reservation2, now)
                 )
             } Then {
                 resultMessagePayload(
