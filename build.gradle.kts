@@ -22,7 +22,7 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.3"
+extra["axonFrameworkVersion"] = "5.0.4"
 extra["springDocOpenApiVersion"] = "3.0.2"
 extra["springBootVersion"] = "4.0.2"
 extra["springAiVersion"] = "2.0.0-M2"

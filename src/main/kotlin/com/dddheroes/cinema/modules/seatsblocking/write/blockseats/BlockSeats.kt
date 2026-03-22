@@ -121,7 +121,7 @@ private class EventSourcedState private constructor(val state: State) {
     companion object {
         @JvmStatic
         @EventCriteriaBuilder
-        fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
+        fun seatsCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
             val screeningId = consistencyBoundary.screeningId.toString()
             val seats = consistencyBoundary.seats
             val seatsCriteria = seats.map { seat -> seatCriteria(screeningId, seat) }
