@@ -11,16 +11,16 @@ import org.axonframework.messaging.eventhandling.GenericEventMessage
 import org.axonframework.messaging.queryhandling.gateway.QueryGateway
 import org.mockito.ArgumentMatchers.*
 import org.mockito.Mockito
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.test.context.TestContext
+import org.springframework.test.context.TestExecutionListener
+import org.springframework.test.context.TestExecutionListeners
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoBeans
-import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
  * Generic test helper for stubbing Axon Framework 5 [CommandGateway], [QueryGateway], and [Clock].
  *
  * Independent of MockMvc — usable with any test type (`@WebMvcTest`, `@SpringBootTest`, etc.).
- * Injected as a Spring bean via the [@AxonGatewaysMockTest][AxonGatewaysMockTest] annotation.
+ * Injected as a Spring bean via the [@AxonGatewaysMock][AxonGatewaysMock] annotation.
  *
  * ## Command stubbing
  *
@@ -116,9 +116,15 @@ class AxonGatewaysMock(
     // ---- Query ----
 
     /** Stubs the [QueryGateway] to return [result] when the given [query] is dispatched. */
-    inline fun <reified R, reified Q : Any> assumeQueryReturns(query: Q, result: R) {
+    inline fun <reified R : Any, reified Q : Any> assumeQueryReturns(query: Q, result: R?) {
         Mockito.doReturn(CompletableFuture.completedFuture(result))
             .`when`(queryGateway).query(eq(query), eq(R::class.java))
+    }
+
+    /** Stubs the [QueryGateway] to return `null` when the given [query] is dispatched. */
+    fun <Q : Any> assumeQueryReturnsNull(query: Q) {
+        Mockito.doReturn(CompletableFuture.completedFuture(null))
+            .`when`(queryGateway).query(eq(query), any(Class::class.java))
     }
 
     // ---- Clock ----
@@ -130,7 +136,6 @@ class AxonGatewaysMock(
      */
     fun currentTimeIs(instant: Instant): Instant {
         Mockito.`when`(clock.instant()).thenReturn(instant)
-        Mockito.`when`(clock.zone).thenReturn(ZoneOffset.UTC)
         @Suppress("DEPRECATION")
         GenericEventMessage.clock = Clock.fixed(instant, ZoneOffset.UTC)
         return instant
@@ -245,13 +250,11 @@ class AxonGatewaysMockConfiguration {
     ) = AxonGatewaysMock(commandGateway, queryGateway, clock, messageTypeResolver)
 }
 
-/** Resets the [Clock] mock before each test for test isolation. */
-class AxonGatewaysMockResetExtension : BeforeEachCallback {
+/** Resets the [Clock] mock before each test (after Spring's mock reset). */
+class AxonGatewaysMockSetupListener : TestExecutionListener {
 
-    override fun beforeEach(context: ExtensionContext) {
-        SpringExtension.getApplicationContext(context)
-            .getBeanProvider(AxonGatewaysMock::class.java)
-            .ifAvailable { it.resetClock() }
+    override fun beforeTestMethod(testContext: TestContext) {
+        testContext.applicationContext.getBean<AxonGatewaysMock>().resetClock()
     }
 }
 
@@ -277,5 +280,8 @@ class AxonGatewaysMockResetExtension : BeforeEachCallback {
     MockitoBean(types = [Clock::class])
 )
 @Import(AxonGatewaysMockConfiguration::class)
-@ExtendWith(AxonGatewaysMockResetExtension::class)
+@TestExecutionListeners(
+    listeners = [AxonGatewaysMockSetupListener::class],
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 annotation class AxonGatewaysMockTest
