@@ -22,7 +22,7 @@ repositories {
 }
 
 extra["assertkVersion"] = "0.28.1"
-extra["axonFrameworkVersion"] = "5.0.3"
+extra["axonFrameworkVersion"] = "5.1.0-SNAPSHOT"
 extra["springDocOpenApiVersion"] = "3.0.2"
 extra["springBootVersion"] = "4.0.2"
 extra["springAiVersion"] = "2.0.0-M2"
@@ -34,7 +34,8 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springDocOpenApiVersion")}")
 
     implementation("org.axonframework:axon-eventsourcing:${property("axonFrameworkVersion")}")
-    implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
+    implementation("io.axoniq.framework:axoniq-spring-boot-starter:${property("axonFrameworkVersion")}")
+    implementation("org.axonframework.extensions.spring:axon-spring:${property("axonFrameworkVersion")}")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
@@ -54,6 +55,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("io.axoniq.framework:axoniq-testcontainer:${property("axonFrameworkVersion")}")
 
     implementation("org.apache.logging.log4j:log4j-api-kotlin:1.5.0")
 }
