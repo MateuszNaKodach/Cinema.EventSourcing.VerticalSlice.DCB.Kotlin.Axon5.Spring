@@ -6,7 +6,6 @@ import com.dddheroes.cinema.modules.dayschedule.MovieId
 import com.dddheroes.cinema.modules.dayschedule.events.ScreeningScheduled
 import com.dddheroes.cinema.modules.dayschedule.random
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatBlocked
-import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
@@ -19,7 +18,6 @@ import org.axonframework.test.fixture.When
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -30,7 +28,7 @@ import java.util.*
 class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonTestFixture) {
 
     @Test
-    fun `block seats if screening scheduled and seat placed, not-blocked`() {
+    fun `block seats as first event when screening scheduled`() {
         val dayScheduleId = DayScheduleId.random()
         val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
 
@@ -54,9 +52,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    SeatPlaced(screeningId, seatRow1Col3, now),
                 )
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, now))
@@ -85,11 +80,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
 
         sliceUnderTest.Scenario {
             Given {
-                events(
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    SeatPlaced(screeningId, seatRow1Col3, now),
-                )
+                noPriorActivity()
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, now))
             } Then {
@@ -125,51 +116,11 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         screeningEndTime,
                         eventTime
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, eventTime),
-                    SeatPlaced(screeningId, seatRow1Col2, eventTime),
                 )
             } When {
                 command(BlockSeats(screeningId, seats.toSet(), owner, afterScreeningEndTime))
             } Then {
                 resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - screening has already ended"))
-            }
-        }
-    }
-
-    @Test
-    fun `cannot block seats if they are not placed yet`() {
-        val dayScheduleId = DayScheduleId.random()
-        val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
-
-        val movieId = MovieId.random()
-        val screeningId = ScreeningId.random()
-        val seatRow5Col1 = SeatNumber(5, 1)
-        val seatRow5Col2 = SeatNumber(5, 2)
-        val seatRow5Col3 = SeatNumber(5, 3)
-        val seats = listOf(seatRow5Col1, seatRow5Col2, seatRow5Col3)
-
-        val owner = aBlockadeOwner()
-
-        sliceUnderTest.Scenario {
-            Given {
-                events(
-                    ScreeningScheduled(
-                        dayScheduleId,
-                        screeningId,
-                        movieId,
-                        LocalTime.of(10, 0),
-                        LocalTime.of(12, 0),
-                        now
-                    ),
-                    // Only place some seats, not all
-                    SeatPlaced(screeningId, seatRow5Col1, now),
-                    SeatPlaced(screeningId, seatRow5Col2, now),
-                    // seatRow5Col3 is NOT placed
-                )
-            } When {
-                command(BlockSeats(screeningId, seats.toSet(), owner, now))
-            } Then {
-                resultMessagePayload(CommandHandlerResult.Failure("Cannot block seats - must be placed first"))
             }
         }
     }
@@ -200,10 +151,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    SeatPlaced(screeningId, seatRow1Col3, now),
-                    // Some seats are already blocked by ownerA
                     SeatBlocked(screeningId, seatRow1Col1, ownerA, now),
                     SeatBlocked(screeningId, seatRow1Col2, ownerA, now),
                 )
@@ -239,9 +186,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    // Seats are already blocked by the same owner
                     SeatBlocked(screeningId, seatRow1Col1, owner, now),
                     SeatBlocked(screeningId, seatRow1Col2, owner, now),
                 )
@@ -279,10 +223,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    SeatPlaced(screeningId, seatRow1Col3, now),
-                    // Only one seat is already blocked by the same owner
                     SeatBlocked(screeningId, seatRow1Col1, owner, now),
                 )
             } When {
@@ -290,7 +230,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
             } Then {
                 success()
                 events(
-                    // Only seats that were not already blocked should generate events
                     SeatBlocked(screeningId, seatRow1Col2, owner, now),
                     SeatBlocked(screeningId, seatRow1Col3, owner, now),
                 )
@@ -322,9 +261,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningId, seatRow1Col1, now),
-                    SeatPlaced(screeningId, seatRow1Col2, now),
-                    // Seats were blocked and then unblocked
                     SeatBlocked(screeningId, seatRow1Col1, owner, now),
                     SeatBlocked(screeningId, seatRow1Col2, owner, now),
                     SeatUnblocked(screeningId, seatRow1Col1, owner, now),
@@ -358,7 +294,6 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
         sliceUnderTest.Scenario {
             Given {
                 events(
-                    // Screening A scheduled and seat placed + blocked by ownerA
                     ScreeningScheduled(
                         dayScheduleId,
                         screeningA,
@@ -367,9 +302,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(12, 0),
                         now
                     ),
-                    SeatPlaced(screeningA, sameSeat, now),
                     SeatBlocked(screeningA, sameSeat, ownerA, now),
-                    // Screening B scheduled and same seat placed (not blocked)
                     ScreeningScheduled(
                         dayScheduleId,
                         screeningB,
@@ -378,10 +311,8 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
                         LocalTime.of(16, 0),
                         now
                     ),
-                    SeatPlaced(screeningB, sameSeat, now),
                 )
             } When {
-                // Block same seat for screening B — should succeed despite being blocked in screening A
                 command(BlockSeats(screeningB, setOf(sameSeat), ownerB, now))
             } Then {
                 success()
@@ -394,7 +325,7 @@ class BlockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: AxonT
 
     private fun aBlockadeOwner() = "Reservation:${UUID.randomUUID()}"
 
-    private fun currentTime() = Instant.now()
+    private fun currentTime() = java.time.Instant.now()
 
     private fun currentTime(date: LocalDate, time: LocalTime = LocalTime.of(0, 0)) = date.atTime(time)
         .toInstant(ZoneOffset.UTC)

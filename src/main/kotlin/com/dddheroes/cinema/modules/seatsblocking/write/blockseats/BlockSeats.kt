@@ -4,7 +4,6 @@ import com.dddheroes.cinema.CinemaTags
 import com.dddheroes.cinema.modules.dayschedule.events.ScreeningScheduled
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatEvent
-import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
@@ -52,10 +51,12 @@ data class BlockSeats(
     val seats: Set<SeatNumber>,
     val blockadeOwner: String,
     val issuedAt: Instant
-)
+) {
+    val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
+}
 
 private data class State(
-    val blockadeBySeat: Map<SeatNumber, String?> = emptyMap(),
+    val blockadeBySeat: Map<SeatNumber, String> = emptyMap(),
     val screeningEndTime: Instant? = null
 )
 
@@ -66,14 +67,6 @@ private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
     if (command.issuedAt.isAfter(state.screeningEndTime)) {
         throw IllegalStateException("Cannot block seats - screening has already ended")
     }
-    // Check if seats are placed (exist in state map)
-    val seatsNotPlaced = command.seats.filter { seat ->
-        !state.blockadeBySeat.containsKey(seat)
-    }
-
-    if (seatsNotPlaced.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - must be placed first")
-    }
 
     val seatsBlockedByOthers = command.seats.filter { seat ->
         val blockedBy = state.blockadeBySeat[seat]
@@ -81,27 +74,24 @@ private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
     }
 
     if (seatsBlockedByOthers.isNotEmpty()) {
-        throw kotlin.IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
+        throw IllegalStateException("Cannot block seats - some seats are already blocked by others: $seatsBlockedByOthers")
     }
 
     return command.seats.mapNotNull { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        when (blockedBy) {
+        when (state.blockadeBySeat[seat]) {
             null -> SeatBlocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
-            command.blockadeOwner -> null // Already blocked by same owner, no event needed
+            command.blockadeOwner -> null // Already blocked by same owner, idempotent
             else -> null
         }
     }
 }
 
 private fun evolve(state: State, event: CinemaEvent): State = when (event) {
-    is SeatPlaced -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to null))
     is SeatBlocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to event.blockadeOwner))
-    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to null))
+    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat - event.seat)
     is ScreeningScheduled -> state.copy(
         screeningEndTime = event.dayScheduleId.raw.atTime(event.endTime).toInstant(ZoneOffset.UTC)
     )
-
     else -> state
 }
 
@@ -110,14 +100,11 @@ private fun evolve(state: State, event: CinemaEvent): State = when (event) {
 ///////////////////////////////////////////
 
 @ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseats.enabled"])
-@EventSourced(idType = ConsistencyBoundaryId::class) // @ConsistencyBoundary
+@EventSourced(idType = ConsistencyBoundaryId::class)
 private class EventSourcedState private constructor(val state: State) {
 
     @EntityCreator
     constructor() : this(State())
-
-    @EventSourcingHandler
-    fun evolve(event: SeatPlaced) = EventSourcedState(evolve(state, event))
 
     @EventSourcingHandler
     fun evolve(event: SeatBlocked) = EventSourcedState(evolve(state, event))
@@ -134,7 +121,15 @@ private class EventSourcedState private constructor(val state: State) {
         fun resolveCriteria(consistencyBoundary: ConsistencyBoundaryId): EventCriteria {
             val screeningId = consistencyBoundary.screeningId.raw
             val seats = EventCriteria.either(
-                /*seats events*/
+                consistencyBoundary.seats.map {
+                    EventCriteria.havingTags(
+                        Tag.of(CinemaTags.SCREENING_ID, screeningId),
+                        Tag.of(CinemaTags.SEAT_ID, it.toString())
+                    ).andBeingOneOfTypes(
+                        "SeatsBlocking.SeatBlocked",
+                        "SeatsBlocking.SeatUnblocked",
+                    )
+                }
             )
             val screeningSchedules =
                 EventCriteria.havingTags(Tag.of(CinemaTags.SCREENING_ID, screeningId))
@@ -142,19 +137,6 @@ private class EventSourcedState private constructor(val state: State) {
 
             return EventCriteria.either(seats, screeningSchedules)
         }
-
-        private fun seatCriteria(
-            screeningId: String,
-            number: SeatNumber
-        ): EventCriteria? = EventCriteria.havingTags(
-            Tag.of(CinemaTags.SCREENING_ID, screeningId),
-            Tag.of(CinemaTags.SEAT_ID, number.toString())
-        )
-            .andBeingOneOfTypes(
-                "SeatsBlocking.SeatPlaced",
-                "SeatsBlocking.SeatBlocked",
-                "SeatsBlocking.SeatUnblocked",
-            )
     }
 }
 

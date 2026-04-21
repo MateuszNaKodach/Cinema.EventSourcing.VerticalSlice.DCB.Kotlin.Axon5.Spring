@@ -5,16 +5,13 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatEvent
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotUnblocked
-import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
 import com.dddheroes.cinema.modules.seatsblocking.write.blockseats.ConsistencyBoundaryId
-import com.dddheroes.cinema.shared.events.CinemaEvent
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandHandlerResult
 import com.dddheroes.sdk.application.resultOf
 import com.dddheroes.sdk.application.toCommandResult
-import com.dddheroes.sdk.restapi.ErrorResponse
 import com.dddheroes.sdk.restapi.toResponseEntity
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler
@@ -54,18 +51,10 @@ data class UnblockSeats(
 }
 
 private data class State(
-    val blockadeBySeat: Map<SeatNumber, String?> = emptyMap()
+    val blockadeBySeat: Map<SeatNumber, String> = emptyMap()
 )
 
 private fun decide(command: UnblockSeats, state: State): List<SeatEvent> {
-    val seatsNotPlaced = command.seats.filter { seat ->
-        !state.blockadeBySeat.containsKey(seat)
-    }
-
-    if (seatsNotPlaced.isNotEmpty()) {
-        throw IllegalStateException("Cannot unblock seats - must be placed first")
-    }
-
     val seatsBlockedByOthers = command.seats.filter { seat ->
         val blockedBy = state.blockadeBySeat[seat]
         blockedBy != null && blockedBy != command.blockadeOwner
@@ -76,19 +65,17 @@ private fun decide(command: UnblockSeats, state: State): List<SeatEvent> {
     }
 
     return command.seats.mapNotNull { seat ->
-        val blockedBy = state.blockadeBySeat[seat]
-        when (blockedBy) {
+        when (state.blockadeBySeat[seat]) {
             command.blockadeOwner -> SeatUnblocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
-            null -> null // Already unblocked, no event needed (idempotent)
+            null -> null // Not blocked, idempotent
             else -> null
         }
     }
 }
 
 private fun evolve(state: State, event: SeatEvent): State = when (event) {
-    is SeatPlaced -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to null))
     is SeatBlocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to event.blockadeOwner))
-    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to null))
+    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat - event.seat)
     is SeatNotBlocked -> state
     is SeatNotUnblocked -> state
 }
@@ -103,9 +90,6 @@ private class UnblockSeatsEventSourcedState private constructor(val state: State
 
     @EntityCreator
     constructor() : this(State())
-
-    @EventSourcingHandler
-    fun evolve(event: SeatPlaced) = UnblockSeatsEventSourcedState(evolve(state, event))
 
     @EventSourcingHandler
     fun evolve(event: SeatBlocked) = UnblockSeatsEventSourcedState(evolve(state, event))
@@ -125,7 +109,6 @@ private class UnblockSeatsEventSourcedState private constructor(val state: State
                             Tag.of(CinemaTags.SEAT_ID, it.toString())
                         )
                         .andBeingOneOfTypes(
-                            "SeatsBlocking.SeatPlaced",
                             "SeatsBlocking.SeatBlocked",
                             "SeatsBlocking.SeatUnblocked",
                         )
