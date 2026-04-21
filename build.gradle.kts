@@ -35,7 +35,10 @@ dependencies {
 
     implementation("org.axonframework:axon-eventsourcing:${property("axonFrameworkVersion")}")
     implementation("io.axoniq.framework:axoniq-spring-boot-starter:${property("axonFrameworkVersion")}")
-    implementation("org.axonframework.extensions.spring:axon-spring:${property("axonFrameworkVersion")}")
+    implementation("io.axoniq.framework:axoniq-spring-boot-autoconfigure:${property("axonFrameworkVersion")}")
+    implementation("io.axoniq.framework:axoniq-dead-letter:${property("axonFrameworkVersion")}")
+    implementation("org.axonframework.extensions.spring:axon-spring-boot-starter:${property("axonFrameworkVersion")}")
+//    implementation("org.axonframework.extensions.spring:axon-spring:${property("axonFrameworkVersion")}")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
