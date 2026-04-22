@@ -32,7 +32,6 @@ class UnblockSeatsSpringSliceTest @Autowired constructor(val sliceUnderTest: Axo
         val dayScheduleId = DayScheduleId.random()
         val now = currentTime(dayScheduleId.toLocalDate(), LocalTime.of(10, 0))
 
-        val movieId = MovieId.random()
         val screeningId = ScreeningId.random()
         val seatRow1Col1 = SeatNumber(1, 1)
         val seatRow1Col2 = SeatNumber(1, 2)

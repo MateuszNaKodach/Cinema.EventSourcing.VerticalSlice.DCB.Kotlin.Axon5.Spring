@@ -6,7 +6,6 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatEvent
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotUnblocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
-import com.dddheroes.cinema.modules.seatsblocking.write.blockseats.ConsistencyBoundaryId
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandHandlerResult
@@ -49,6 +48,11 @@ data class UnblockSeats(
 ) {
     val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
 }
+
+data class ConsistencyBoundaryId(
+    val screeningId: ScreeningId,
+    val seats: Set<SeatNumber>
+)
 
 private data class State(
     val blockadeBySeat: Map<SeatNumber, String> = emptyMap()

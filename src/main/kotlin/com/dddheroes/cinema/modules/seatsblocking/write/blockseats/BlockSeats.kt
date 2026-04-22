@@ -40,11 +40,6 @@ import java.util.concurrent.CompletableFuture
 ////////// Domain
 ///////////////////////////////////////////
 
-data class ConsistencyBoundaryId(
-    val screeningId: ScreeningId,
-    val seats: Set<SeatNumber>
-)
-
 @Command(namespace = "SeatsBlocking", name = "BlockSeats", version = "1.0.0")
 data class BlockSeats(
     val screeningId: ScreeningId,
@@ -54,6 +49,11 @@ data class BlockSeats(
 ) {
     val consistencyBoundaryId = ConsistencyBoundaryId(screeningId, seats)
 }
+
+data class ConsistencyBoundaryId(
+    val screeningId: ScreeningId,
+    val seats: Set<SeatNumber>
+)
 
 private data class State(
     val blockadeBySeat: Map<SeatNumber, String> = emptyMap(),
@@ -78,7 +78,8 @@ private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
     }
 
     return command.seats.mapNotNull { seat ->
-        when (state.blockadeBySeat[seat]) {
+        val blockedBy = state.blockadeBySeat[seat]
+        when (blockedBy) {
             null -> SeatBlocked(command.screeningId, seat, command.blockadeOwner, command.issuedAt)
             command.blockadeOwner -> null // Already blocked by same owner, idempotent
             else -> null
@@ -87,11 +88,11 @@ private fun decide(command: BlockSeats, state: State): List<SeatEvent> {
 }
 
 private fun evolve(state: State, event: CinemaEvent): State = when (event) {
-    is SeatBlocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to event.blockadeOwner))
-    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat - event.seat)
     is ScreeningScheduled -> state.copy(
         screeningEndTime = event.dayScheduleId.raw.atTime(event.endTime).toInstant(ZoneOffset.UTC)
     )
+    is SeatBlocked -> state.copy(blockadeBySeat = state.blockadeBySeat + (event.seat to event.blockadeOwner))
+    is SeatUnblocked -> state.copy(blockadeBySeat = state.blockadeBySeat - event.seat)
     else -> state
 }
 
