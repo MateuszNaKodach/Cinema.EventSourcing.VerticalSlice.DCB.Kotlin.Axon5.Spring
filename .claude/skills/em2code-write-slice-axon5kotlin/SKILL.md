@@ -114,7 +114,7 @@ Create `FeatureName.Slice.kt` with three sections (adapt to project conventions)
 ////////// Domain
 ///////////////////////////////////////////
 // 1. Command data class (public)
-// 2. State data class (private) + initialState
+// 2. State data class (private) + initialState top-level private val
 // 3. decide(command, state): List<Event>  -- pure function
 // 4. evolve(state, event): State          -- pure function
 
@@ -136,10 +136,53 @@ Key rules for each component:
 **Command**: No `@TargetAggregateIdentifier`. Plain data class. Public. Add `@get:JvmName` on properties whose names
 match their type pattern. Annotate with `@Command(namespace = "<BoundedContext>", name = "<CommandName>", version = "1.0.0")` — import from `org.axonframework.messaging.commandhandling.annotation.Command`.
 
-**State**: Private. Immutable data class. Contains ONLY fields needed by `decide()`. Companion `initialState` val.
+**State**: Private. Immutable data class. Contains ONLY fields needed by `decide()`. `initialState` is a **top-level private property** (NOT a companion object) placed immediately after the `State` class:
+```kotlin
+private data class State(val foo: Foo)
+
+private val initialState = State(foo = Foo.default())
+```
+
+**⚠️ STATELESS COMMANDS — skip event sourcing entirely.** If `decide()` needs no prior state (the command is always valid regardless of history, e.g. `DepositResources`), do NOT create a `@EventSourced` entity at all. Instead:
+- Use `typealias State = Nothing?` to document the conscious decision
+- `evolve()` throws `IllegalStateException` (it is never called — documents that state is irrelevant)
+- No `@EventSourced` entity class, no `@InjectEntity` in the handler
+- Handler signature is `(command, AxonMetadata, EventAppender)` — no entity parameter
+
+```kotlin
+typealias State = Nothing?
+
+private fun decide(command: MyCommand, state: State): List<HeroesEvent> = listOf(MyEvent(...))
+
+private fun evolve(state: State, event: MyEvent): State {
+    throw IllegalStateException("Command is always valid — state is never needed")
+}
+
+// Application: NO @EventSourced entity
+@Component
+private class MyCommandHandler {
+    @CommandHandler
+    fun handle(command: MyCommand, metadata: AxonMetadata, eventAppender: EventAppender): CommandHandlerResult = resultOf {
+        val events = decide(command, null)
+        eventAppender.append(events, metadata)
+        events.toCommandResult()
+    }
+}
+```
 
 **decide()**: Private standalone function. Takes `(command, state)`, returns event(s). No side effects. Enforce rules
 here: throw `IllegalStateException` for violations, return `emptyList()` for idempotent no-ops.
+
+**⚠️ DECIDER PURITY (STRICT) — `decide` takes ONLY `(command, state)`.** No extra parameters — no policies,
+clocks, services, repositories, randomness. Everything `decide` needs MUST be on the command itself.
+
+- **Policies / strategies belong on the command** as a sealed interface of data objects (serializable value
+  objects), NOT as Spring-injected services. Example: `sealed interface SeatBlockingPolicy { data object NoAdjacent : SeatBlockingPolicy; data object Any : SeatBlockingPolicy }` placed as a `policy: SeatBlockingPolicy` field on the command. The command stays fully self-contained and serializable, and `decide` can `when (command.policy)` over it.
+- **Side inputs that vary at runtime** (current time, generated IDs) are populated by the caller and passed on
+  the command — never read inside `decide`.
+- **Validation style**: use explicit `if (…) throw IllegalStateException(…)` for boundary/precondition checks.
+  Do NOT wrap them in `runCatching` — `runCatching` swallows non-business `Throwable`s and obscures intent.
+  Reserve `runCatching` for genuinely-fallible third-party calls, never for plain domain invariants.
 
 **evolve()**: Private standalone function. Takes `(state, event)`, returns new State. Uses `when (event: SealedType)` over the sealed interface.
 
@@ -159,8 +202,7 @@ This ensures compile-time safety: adding a new event to the sealed interface bre
 `.andBeingOneOfTypes(...)` **MUST use `"Namespace.Name"` strings** (e.g., `"CreatureRecruitment.DwellingBuilt"`), NEVER
 `ClassName::class.java.getName()`. The type name is the `@Event` annotation's `namespace` + `"."` + `name`.
 
-**Handler**: `@CommandHandler` method receives `(command, AxonMetadata, @InjectEntity entity, EventAppender)`. Returns
-`CommandHandlerResult` via `resultOf { }`. Calls `decide()`, appends events.
+**Handler**: For stateful commands, `@CommandHandler` method receives `(command, AxonMetadata, @InjectEntity entity, EventAppender)`. For stateless commands (no `@EventSourced` entity), it receives `(command, AxonMetadata, EventAppender)` — no entity parameter. Always returns `CommandHandlerResult` via `resultOf { }`. Calls `decide()`, appends events.
 
 **REST**: Private class. `CompletableFuture<ResponseEntity<Any>>` return type. Constructs command with value objects,
 sends via `commandGateway.send(command.asCommandMessage(metadata)).resultAs(...).toResponseEntity()`.
@@ -191,6 +233,11 @@ value class Day(val raw: Int) {
 **Add domain operations (`next()`, `isLast`, etc.) to value classes** so that `decide()` works entirely with value
 objects and never unwraps to `.raw`. The `decide()` function is pure domain logic — it should speak the domain language,
 not escape to primitives. Reserve `.raw` for boundaries: REST layer, cross-BC mapping, serialization.
+
+**Concise naming — no redundant suffixes.** Name domain operations using only what the containing type does
+NOT already convey. Prefer `left()` / `right()` / `upper()` / `lower()` over `leftNeighbor()` / `rightNeighbor()`
+on a `SeatNumber` — "neighbor" is already implied by the type. Same rule for value-object properties and helpers:
+strip information the type, package, or obvious context already gives you.
 
 **Where to place them:**
 
