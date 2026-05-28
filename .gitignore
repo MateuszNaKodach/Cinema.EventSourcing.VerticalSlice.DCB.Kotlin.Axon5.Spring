@@ -49,3 +49,6 @@ out/
 
 ### Axon Server ###
 axonserver/
+
+### proophboard ###
+.proophboard/.env.local
