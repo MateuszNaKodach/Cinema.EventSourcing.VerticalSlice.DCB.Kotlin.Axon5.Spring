@@ -11,16 +11,16 @@ import org.axonframework.messaging.eventhandling.GenericEventMessage
 import org.axonframework.messaging.queryhandling.gateway.QueryGateway
 import org.mockito.ArgumentMatchers.*
 import org.mockito.Mockito
-import org.springframework.beans.factory.getBean
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
-import org.springframework.test.context.TestContext
-import org.springframework.test.context.TestExecutionListener
-import org.springframework.test.context.TestExecutionListeners
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoBeans
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -250,11 +250,13 @@ class AxonGatewaysMockConfiguration {
     ) = AxonGatewaysMock(commandGateway, queryGateway, clock, messageTypeResolver)
 }
 
-/** Resets the [Clock] mock before each test (after Spring's mock reset). */
-class AxonGatewaysMockSetupListener : TestExecutionListener {
+/** Resets the [Clock] mock before each test for test isolation. */
+class AxonGatewaysMockResetExtension : BeforeEachCallback {
 
-    override fun beforeTestMethod(testContext: TestContext) {
-        testContext.applicationContext.getBean<AxonGatewaysMock>().resetClock()
+    override fun beforeEach(context: ExtensionContext) {
+        SpringExtension.getApplicationContext(context)
+            .getBeanProvider(AxonGatewaysMock::class.java)
+            .ifAvailable { it.resetClock() }
     }
 }
 
@@ -280,8 +282,5 @@ class AxonGatewaysMockSetupListener : TestExecutionListener {
     MockitoBean(types = [Clock::class])
 )
 @Import(AxonGatewaysMockConfiguration::class)
-@TestExecutionListeners(
-    listeners = [AxonGatewaysMockSetupListener::class],
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
+@ExtendWith(AxonGatewaysMockResetExtension::class)
 annotation class AxonGatewaysMockTest
